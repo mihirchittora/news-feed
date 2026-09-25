@@ -51,6 +51,8 @@ public class SecurityConfig {
                                 "/api/v1/newspapers",
                                 "/api/v1/newspapers/*",
                                 "/api/v1/newspapers/*/cover",
+                                "/api/v1/ads",
+                                "/api/v1/ads/**",
                                 "/api/v1/stories/*/comments",
                                 "/api/v1/media/**",
                                 "/swagger-ui/**",

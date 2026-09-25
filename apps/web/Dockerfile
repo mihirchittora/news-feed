@@ -10,6 +10,8 @@ WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 ARG NEXT_PUBLIC_API_URL=http://localhost:8080
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ARG NEXT_PUBLIC_FEED_AD_INTERVAL=5
+ENV NEXT_PUBLIC_FEED_AD_INTERVAL=${NEXT_PUBLIC_FEED_AD_INTERVAL}
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY package.json package-lock.json next.config.mjs postcss.config.mjs tailwind.config.ts tsconfig.json next-env.d.ts ./
 COPY src ./src

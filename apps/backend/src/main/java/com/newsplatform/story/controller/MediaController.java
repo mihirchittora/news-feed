@@ -26,7 +26,7 @@ public class MediaController {
     private final MediaService service; private final Path storagePath;
     public MediaController(MediaService service, @Value("${app.media.storage-path:./data/media}") String storagePath) { this.service = service; this.storagePath = Path.of(storagePath).toAbsolutePath().normalize(); }
     @PostMapping(value = "/api/v1/admin/media", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAuthority('STORY_CREATE') or hasAuthority('STORY_EDIT') or hasAuthority('SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('STORY_CREATE') or hasAuthority('STORY_EDIT') or hasAuthority('AD_CREATE') or hasAuthority('AD_EDIT') or hasAuthority('SUPER_ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
     public MediaResponse upload(@RequestPart("file") MultipartFile file, @RequestParam(required = false) UUID storyId, @AuthenticationPrincipal AuthenticatedUser actor) { return service.upload(file, storyId); }
     @GetMapping("/api/v1/media/{storageKey:.+}")

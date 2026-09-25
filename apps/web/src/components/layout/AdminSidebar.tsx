@@ -13,7 +13,7 @@ const navItems = [
   { label: "Tags", icon: Tags, href: "/admin/tags", permission: "TAG_MANAGE" },
   { label: "Comments", icon: MessageSquare, href: "/admin/comments", permission: "COMMENT_MODERATE" },
   { label: "Newspaper", icon: BookOpen, href: "/admin/newspapers", permission: "NEWSPAPER_VIEW_ADMIN" },
-  { label: "Advertisements", icon: Megaphone, href: "#", permission: "AD_VIEW_ADMIN" },
+  { label: "Advertisements", icon: Megaphone, href: "/admin/ads", permission: "AD_VIEW_ADMIN" },
   { label: "Staff Users", icon: Users, href: "/admin/staff", permission: "STAFF_VIEW" },
   { label: "Roles & Permissions", icon: Settings2, href: "/admin/roles", permission: "ROLE_VIEW" },
 ];
@@ -38,11 +38,7 @@ export function AdminSidebar({ open, onClose, onLogout }: AdminSidebarProps) {
         </div>
         <p className="hidden px-3 text-[10px] font-bold uppercase tracking-[0.22em] text-slate lg:block">Workspace</p>
         <nav className="mt-4 space-y-1" aria-label="Admin sections">
-          {visibleItems.map(({ label, icon: Icon, href }) => href === "#" ? (
-            <button key={label} type="button" disabled title={`${label} coming soon`} className="flex min-h-11 w-full cursor-not-allowed items-center gap-3 rounded-xl px-3 text-left text-sm font-semibold text-slate/55">
-              <Icon size={17} aria-hidden="true" />{label}<span className="ml-auto text-[9px] font-bold uppercase tracking-wide">Soon</span>
-            </button>
-          ) : (
+          {visibleItems.map(({ label, icon: Icon, href }) => (
             <Link key={label} href={href} onClick={onClose} className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-left text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-coral/20 ${pathname === href || (href !== "/admin/dashboard" && pathname.startsWith(href)) ? "bg-ink text-white" : "text-slate hover:bg-mist hover:text-ink"}`}>
               <Icon size={17} aria-hidden="true" />{label}
             </Link>

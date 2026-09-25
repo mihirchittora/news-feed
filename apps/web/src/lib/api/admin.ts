@@ -1,8 +1,9 @@
 import { request } from "@/lib/api/client";
-import type { AdminNewspaper, AdminRole, AdminStory, Category, PermissionGroup, StaffUser, StoryMedia, Tag, User } from "@/lib/types";
+import type { AdminAdvertisement, AdminAdvertisementList, AdminNewspaper, AdminRole, AdminStory, Category, DashboardPeriodType, DashboardResponse, PermissionGroup, StaffUser, StoryMedia, Tag, User } from "@/lib/types";
 
 export const adminApi = {
   me: (token: string) => request<User>("/api/v1/admin/me", {}, token),
+  dashboard: (token: string, period: DashboardPeriodType = "TODAY") => request<DashboardResponse>(`/api/v1/admin/dashboard?period=${period}`, {}, token),
   roles: (token: string) => request<AdminRole[]>("/api/v1/admin/roles", {}, token),
   role: (token: string, id: string) => request<AdminRole>(`/api/v1/admin/roles/${id}`, {}, token),
   createRole: (token: string, payload: { name: string; code: string; description: string; permissionCodes: string[] }) =>
@@ -42,6 +43,14 @@ export const adminApi = {
   unpublishStory: (token: string, id: string) => request<AdminStory>(`/api/v1/admin/stories/${id}/unpublish`, { method: "POST" }, token),
   deleteStory: (token: string, id: string) => request<void>(`/api/v1/admin/stories/${id}`, { method: "DELETE" }, token),
   uploadMedia: (token: string, file: File, storyId?: string) => { const body = new FormData(); body.append("file", file); if (storyId) body.append("storyId", storyId); return request<StoryMedia>("/api/v1/admin/media", { method: "POST", body }, token); },
+  advertisements: (token: string, params = "") => request<AdminAdvertisementList>(`/api/v1/admin/ads${params ? `?${params}` : ""}`, {}, token),
+  advertisement: (token: string, id: string) => request<AdminAdvertisement>(`/api/v1/admin/ads/${id}`, {}, token),
+  createAdvertisement: (token: string, payload: AdvertisementPayload) => request<AdminAdvertisement>("/api/v1/admin/ads", { method: "POST", body: JSON.stringify(payload) }, token),
+  updateAdvertisement: (token: string, id: string, payload: AdvertisementPayload) => request<AdminAdvertisement>(`/api/v1/admin/ads/${id}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  publishAdvertisement: (token: string, id: string) => request<AdminAdvertisement>(`/api/v1/admin/ads/${id}/publish`, { method: "POST" }, token),
+  pauseAdvertisement: (token: string, id: string) => request<AdminAdvertisement>(`/api/v1/admin/ads/${id}/pause`, { method: "POST" }, token),
+  resumeAdvertisement: (token: string, id: string) => request<AdminAdvertisement>(`/api/v1/admin/ads/${id}/resume`, { method: "POST" }, token),
+  deleteAdvertisement: (token: string, id: string) => request<void>(`/api/v1/admin/ads/${id}`, { method: "DELETE" }, token),
   newspapers: (token: string) => request<AdminNewspaper[]>("/api/v1/admin/newspapers", {}, token),
   newspaper: (token: string, id: string) => request<AdminNewspaper>(`/api/v1/admin/newspapers/${id}`, {}, token),
   createNewspaper: (token: string, payload: { title: string; edition: string; editionDate: string }) => request<AdminNewspaper>("/api/v1/admin/newspapers", { method: "POST", body: JSON.stringify(payload) }, token),
@@ -51,4 +60,15 @@ export const adminApi = {
   publishNewspaper: (token: string, id: string) => request<AdminNewspaper>(`/api/v1/admin/newspapers/${id}/publish`, { method: "POST" }, token),
   unpublishNewspaper: (token: string, id: string) => request<AdminNewspaper>(`/api/v1/admin/newspapers/${id}/unpublish`, { method: "POST" }, token),
   deleteNewspaper: (token: string, id: string) => request<void>(`/api/v1/admin/newspapers/${id}`, { method: "DELETE" }, token),
+};
+
+export type AdvertisementPayload = {
+  title: string;
+  advertiserName: string;
+  description?: string;
+  destinationUrl?: string;
+  startAt: string;
+  endAt: string;
+  placement: { type: string; categoryIds?: string[] };
+  mediaId?: string;
 };

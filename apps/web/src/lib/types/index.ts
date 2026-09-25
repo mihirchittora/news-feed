@@ -164,6 +164,38 @@ export type AdminStory = {
 
 export type FeedResponse = { items: StorySummary[]; nextCursor?: string | null; hasMore: boolean };
 
+export type AdvertisementPlacement = {
+  type: "HOME_BANNER" | "HOME_FEED" | "CATEGORY_FEED" | "NEWSPAPER" | string;
+  categoryId?: string | null;
+  categoryName?: string | null;
+};
+
+export type Advertisement = {
+  id: string;
+  title: string;
+  advertiserName: string;
+  description?: string | null;
+  mediaType: "IMAGE" | "VIDEO" | string;
+  mediaUrl: string;
+  thumbnailUrl?: string | null;
+  destinationUrl?: string | null;
+  placementType?: string;
+};
+
+export type AdminAdvertisement = Advertisement & {
+  mimeType: string;
+  fileSize: number;
+  startAt: string;
+  endAt: string;
+  status: "DRAFT" | "SCHEDULED" | "ACTIVE" | "PAUSED" | "EXPIRED" | string;
+  placements: AdvertisementPlacement[];
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminAdvertisementList = { items: AdminAdvertisement[]; page: number; limit: number; hasMore: boolean };
+
 export type BreakingNewsItem = {
   id: string;
   slug: string;
@@ -239,3 +271,75 @@ export type AdminComment = {
 };
 
 export type AdminCommentPage = { items: AdminComment[]; page: number; limit: number; hasMore: boolean };
+
+export type DashboardPeriodType = "TODAY" | "LAST_7_DAYS" | "LAST_30_DAYS";
+
+export type DashboardResponse = {
+  period: { type: DashboardPeriodType; from: string; to: string; timezone: string };
+  content: {
+    publishedStories: number;
+    draftStories: number;
+    unpublishedStories: number;
+    activeBreakingNews: number | null;
+  } | null;
+  engagement: { likes: number; comments: number; commentLikes: number } | null;
+  moderation: { hiddenComments: number; moderatedComments: number } | null;
+  users: { totalRegisteredUsers: number; newUsers: number } | null;
+  staff: { activeStaff: number; disabledStaff: number; pendingSetupStaff: number } | null;
+  newspaper: {
+    todayPublished: boolean;
+    publishedEditionCount: number;
+    draftEditionCount: number;
+    unpublishedEditionCount: number;
+    editions: Array<{
+      editionId: string;
+      editionName: string;
+      title: string;
+      status: string;
+      publishedAt?: string | null;
+    }>;
+  } | null;
+  advertising: {
+    active: number;
+    scheduled: number;
+    paused: number;
+    expired: number;
+    expiringSoon: number;
+    expiringAds: Array<{
+      advertisementId: string;
+      advertiserName: string;
+      title: string;
+      placement: string;
+      endAt: string;
+    }>;
+  } | null;
+  attention: {
+    items: Array<{
+      key: string;
+      label: string;
+      detail: string;
+      severity: "INFO" | "WARNING" | string;
+      href: string;
+    }>;
+  };
+  topStories: Array<{
+    storyId: string;
+    title: string;
+    category: string;
+    publishedAt?: string | null;
+    likeCount: number;
+    commentCount: number;
+    commentLikeCount: number;
+    engagementCount: number;
+  }> | null;
+  categoryBreakdown: Array<{ category: string; published: number }> | null;
+  publishingTrend: Array<{ date: string; published: number }> | null;
+  recentActivity: Array<{
+    activityId: string;
+    action: string;
+    targetType: string;
+    targetLabel: string;
+    actorName?: string | null;
+    createdAt: string;
+  }>;
+};

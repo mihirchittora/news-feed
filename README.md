@@ -1,8 +1,8 @@
-# News Platform — Milestone 5
+# News Platform — Milestone 7
 
 Milestones 1–3 provide the modular-monolith foundation for a digital news platform: authentication, configurable RBAC, editorial publishing, media, chronological feeds, likes, comments, replies, and moderation.
 
-Milestone 4 adds a simple editorial Breaking News flag to published stories. Milestone 5 adds a two-level category hierarchy and a protected Daily Newspaper archive. Newspaper metadata and covers are public; PDF documents require an authenticated account and a published edition. Advertisements, push notifications, recommendations, WebSockets, subscriptions, payments, and AI features remain out of scope.
+Milestone 4 adds a simple editorial Breaking News flag to published stories. Milestone 5 adds a two-level category hierarchy and a protected Daily Newspaper archive. Milestone 6 adds operational advertisements. Milestone 7 adds a real-data, permission-filtered admin dashboard and reporting view. Newspaper metadata and covers are public; PDF documents require an authenticated account and a published edition. Push notifications, recommendations, WebSockets, subscriptions, payments, public analytics, user tracking, and ad analytics remain out of scope.
 
 ## Architecture
 
@@ -85,6 +85,10 @@ mvn spring-boot:run
 
 The API runs at `http://localhost:8080`.
 
+## Admin dashboard reporting
+
+`/admin/dashboard` loads its operational data from `GET /api/v1/admin/dashboard?period=TODAY`, with `LAST_7_DAYS` and `LAST_30_DAYS` also supported. Periods use calendar-day boundaries in the server-side `APP_TIMEZONE` (default `Asia/Kolkata`), while persisted timestamps remain UTC. The API returns permission-filtered sections rather than requiring one staff member to hold every module permission. See [`docs/dashboard-metrics.md`](docs/dashboard-metrics.md) for metric definitions, timezone semantics, and RBAC behavior.
+
 ## Run the frontend
 
 In a second terminal:
@@ -149,6 +153,7 @@ If an account already exists for that email, startup does nothing. It never over
 | `POST` | `/api/v1/admin/newspapers/{id}/cover` | `NEWSPAPER_UPLOAD` or `NEWSPAPER_EDIT` | Upload or replace a cover |
 | `POST` | `/api/v1/admin/newspapers/{id}/publish` | `NEWSPAPER_PUBLISH` | Publish an edition |
 | `POST` | `/api/v1/admin/newspapers/{id}/unpublish` | `NEWSPAPER_PUBLISH` | Unpublish an edition |
+| `GET` | `/api/v1/admin/dashboard?period=TODAY` | Administrative staff permissions | Read the permission-filtered operational dashboard |
 
 Validation and security errors use one response shape:
 

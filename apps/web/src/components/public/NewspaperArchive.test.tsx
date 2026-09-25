@@ -2,13 +2,13 @@ import { NewspaperArchive } from "@/components/public/NewspaperArchive";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ newspapers: vi.fn() }));
+const mocks = vi.hoisted(() => ({ newspapers: vi.fn(), ads: vi.fn() }));
 
-vi.mock("@/lib/api/public", () => ({ publicApi: { newspapers: mocks.newspapers } }));
+vi.mock("@/lib/api/public", () => ({ publicApi: { newspapers: mocks.newspapers, ads: mocks.ads } }));
 vi.mock("next/link", () => ({ default: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a> }));
 
 describe("NewspaperArchive", () => {
-  beforeEach(() => mocks.newspapers.mockReset());
+  beforeEach(() => { mocks.newspapers.mockReset(); mocks.ads.mockResolvedValue([]); });
 
   it("renders published edition metadata without loading the PDF", async () => {
     mocks.newspapers.mockResolvedValue({ items: [{ id: "edition-1", title: "Daily Newspaper", edition: "Udaipur", editionDate: "2026-09-25", coverImageUrl: null, publishedAt: "2026-09-25T06:00:00Z" }] });

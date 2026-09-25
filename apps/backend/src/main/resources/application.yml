@@ -30,6 +30,7 @@ server:
     include-stacktrace: never
 
 app:
+  timezone: ${APP_TIMEZONE:Asia/Kolkata}
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
   jwt:
     secret: ${JWT_SECRET}
@@ -50,6 +51,9 @@ app:
     default-duration-minutes: ${BREAKING_NEWS_DEFAULT_DURATION_MINUTES:120}
   newspaper:
     max-pdf-upload-size: ${MAX_NEWSPAPER_PDF_UPLOAD_SIZE:104857600}
+  ads:
+    feed-interval: ${FEED_AD_INTERVAL:5}
+    expiring-soon-hours: ${AD_EXPIRING_SOON_HOURS:24}
 
 springdoc:
   swagger-ui:
