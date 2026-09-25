@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-inter: "Helvetica Neue";
+  --font-newsreader: Georgia;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: #f8f7f3;
+}
+
+body {
+  margin: 0;
+  background: #f8f7f3;
+  color: #15212b;
+  font-family: var(--font-inter), Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: #f3b1a8;
+  color: #15212b;
+}
+
+a {
+  text-decoration: none;
+}
+
+button,
+input {
+  font: inherit;
+}

@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: news-platform-api
+  config:
+    import: optional:file:../../.env[.properties]
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/news_platform}
+    username: ${DATABASE_USERNAME:news_platform}
+    password: ${DATABASE_PASSWORD:news_platform_dev}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: ${PORT:8080}
+  error:
+    include-message: never
+    include-stacktrace: never
+
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-seconds: ${JWT_EXPIRATION:3600}
+  initial-admin:
+    email: ${INITIAL_ADMIN_EMAIL:}
+    password: ${INITIAL_ADMIN_PASSWORD:}
+    name: ${INITIAL_ADMIN_NAME:}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui/index.html
+

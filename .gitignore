@@ -1,0 +1,24 @@
+# Environment
+.env
+.env.*
+!.env.example
+apps/web/.next/
+apps/web/node_modules/
+apps/web/.env.local
+apps/web/*.tsbuildinfo
+apps/web/AGENTS.md
+apps/web/CLAUDE.md
+
+# Java / Maven
+apps/backend/target/
+*.class
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
