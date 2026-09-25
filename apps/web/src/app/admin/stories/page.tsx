@@ -2,6 +2,7 @@
 
 import { AdminRoute, PermissionRoute } from "@/components/auth/ProtectedRoute";
 import { AdminShell } from "@/components/layout/AdminShell";
+import { BreakingBadge } from "@/components/public/BreakingBadge";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -23,6 +24,7 @@ function StoriesContent() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [breaking, setBreaking] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -33,6 +35,7 @@ function StoriesContent() {
     if (search) params.set("search", search);
     if (status) params.set("status", status);
     if (categoryId) params.set("categoryId", categoryId);
+    if (breaking) params.set("breaking", breaking);
     setLoading(true);
     setError("");
     try {
@@ -42,7 +45,7 @@ function StoriesContent() {
     } finally {
       setLoading(false);
     }
-  }, [categoryId, search, status, token]);
+  }, [breaking, categoryId, search, status, token]);
 
   useEffect(() => {
     if (!token) return;
@@ -85,9 +88,10 @@ function StoriesContent() {
       <PageHeader eyebrow="Content" title="Stories" description="Create, review, and publish the newsroom’s reporting." />
       {hasPermission("STORY_CREATE") ? <Link href="/admin/stories/new" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-white hover:bg-ink/90"><Plus size={16} /> Create story</Link> : null}
     </div>
-    <div className="mt-7 grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_220px]">
+    <div className="mt-7 grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_180px_220px]">
       <div className="relative"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate" size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} className="min-h-12 w-full rounded-xl border border-line bg-white pl-11 pr-4 text-sm outline-none focus:border-coral focus:ring-4 focus:ring-coral/10" placeholder="Search stories" aria-label="Search stories" /></div>
       <select value={status} onChange={(event) => setStatus(event.target.value)} className="min-h-12 rounded-xl border border-line bg-white px-4 text-sm outline-none focus:border-coral" aria-label="Filter by status"><option value="">All statuses</option><option value="DRAFT">Draft</option><option value="PUBLISHED">Published</option><option value="UNPUBLISHED">Unpublished</option></select>
+      <select value={breaking} onChange={(event) => setBreaking(event.target.value)} className="min-h-12 rounded-xl border border-line bg-white px-4 text-sm outline-none focus:border-coral" aria-label="Filter by Breaking News"><option value="">All Breaking states</option><option value="true">Breaking</option><option value="false">Not Breaking</option></select>
       <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} className="min-h-12 rounded-xl border border-line bg-white px-4 text-sm outline-none focus:border-coral" aria-label="Filter by category"><option value="">All categories</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select>
     </div>
     {notice ? <div className="mt-6"><Alert type="success">{notice}</Alert></div> : null}
@@ -95,7 +99,7 @@ function StoriesContent() {
     {loading ? <LoadingState label="Loading stories" /> : <Card className="mt-7 overflow-hidden">
       <div className="hidden grid-cols-[minmax(0,1fr)_140px_120px_190px] gap-4 border-b border-line bg-mist/40 px-6 py-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate sm:grid"><span>Story</span><span>Category</span><span>Status</span><span>Actions</span></div>
       {stories.length === 0 ? <div className="px-6 py-12 text-center text-sm text-slate">No stories match these filters.</div> : stories.map((story) => <div key={story.id} className="grid gap-3 border-b border-line px-6 py-5 last:border-0 sm:grid-cols-[minmax(0,1fr)_140px_120px_190px] sm:items-center">
-        <div><Link href={`/admin/stories/${story.id}`} className="font-semibold text-ink hover:text-coral">{story.title}</Link><p className="mt-1 text-xs text-slate">By {story.authorName}</p></div>
+        <div><div className="flex flex-wrap items-center gap-2"><Link href={`/admin/stories/${story.id}`} className="font-semibold text-ink hover:text-coral">{story.title}</Link>{story.breakingActive ? <BreakingBadge compact /> : story.isBreaking ? <Badge className="bg-amber-50 text-amber-700">Breaking expired</Badge> : null}</div><p className="mt-1 text-xs text-slate">By {story.authorName}</p></div>
         <p className="text-sm text-slate">{story.categoryName ?? "—"}</p>
         <Badge className={story.status === "PUBLISHED" ? "bg-emerald-50 text-emerald-700" : story.status === "UNPUBLISHED" ? "bg-amber-50 text-amber-700" : "bg-mist text-slate"}>{story.status[0] + story.status.slice(1).toLowerCase()}</Badge>
         <div className="flex flex-wrap items-center gap-1.5 text-sm text-slate">

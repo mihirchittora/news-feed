@@ -1,6 +1,7 @@
 "use client";
 
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { BreakingNewsControls } from "@/components/admin/BreakingNewsControls";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -33,6 +34,7 @@ export function StoryForm({ initialStory }: { initialStory?: AdminStory }) {
   const [categoryId, setCategoryId] = useState(initialStory?.categoryId ?? "");
   const [tagIds, setTagIds] = useState<string[]>(initialStory?.tagIds ?? []);
   const [media, setMedia] = useState<StoryMedia[]>(initialStory?.media ?? []);
+  const [storyStatus, setStoryStatus] = useState<AdminStory["status"] | undefined>(initialStory?.status);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -112,7 +114,8 @@ export function StoryForm({ initialStory }: { initialStory?: AdminStory }) {
   async function unpublish() {
     if (!token || !initialStory || !canPublish) return;
     try {
-      await adminApi.unpublishStory(token, initialStory.id);
+      const updated = await adminApi.unpublishStory(token, initialStory.id);
+      setStoryStatus(updated.status);
       setNotice("Story unpublished.");
       router.refresh();
     } catch (reason) {
@@ -176,6 +179,8 @@ export function StoryForm({ initialStory }: { initialStory?: AdminStory }) {
           </div>
         </div>
       </Card>
+
+      <BreakingNewsControls initialStory={initialStory} status={storyStatus} onNotice={setNotice} onError={setError} />
 
       {preview ? <Card className="mt-6 p-6 sm:p-10"><p className="text-xs font-bold uppercase tracking-[0.18em] text-coral">Authenticated preview</p><h2 className="mt-4 font-display text-4xl font-bold tracking-[-0.05em] text-ink">{title || "Untitled story"}</h2>{summary ? <p className="mt-4 text-lg text-slate">{summary}</p> : null}<div className="prose-news mt-7" dangerouslySetInnerHTML={{ __html: safePreview(body) }} /></Card> : null}
     </div>

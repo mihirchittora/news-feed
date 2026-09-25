@@ -4,6 +4,7 @@ import com.newsplatform.category.entity.Category;
 import com.newsplatform.category.repository.CategoryRepository;
 import com.newsplatform.common.error.RbacException;
 import com.newsplatform.common.util.SlugUtils;
+import com.newsplatform.engagement.service.EngagementService;
 import com.newsplatform.rbac.service.AuditService;
 import com.newsplatform.story.dto.AdminStoryResponse;
 import com.newsplatform.story.dto.FeedResponse;
@@ -45,20 +46,21 @@ public class StoryService {
     private final AuditService auditService;
     private final HtmlSanitizer htmlSanitizer;
     private final MediaStorageService mediaStorageService;
+    private final EngagementService engagementService;
 
     public StoryService(StoryRepository storyRepository, CategoryRepository categoryRepository, TagRepository tagRepository,
                         StoryMediaRepository mediaRepository, UserRepository userRepository, AuditService auditService,
-                        HtmlSanitizer htmlSanitizer, MediaStorageService mediaStorageService) {
+                        HtmlSanitizer htmlSanitizer, MediaStorageService mediaStorageService, EngagementService engagementService) {
         this.storyRepository = storyRepository; this.categoryRepository = categoryRepository; this.tagRepository = tagRepository;
         this.mediaRepository = mediaRepository; this.userRepository = userRepository; this.auditService = auditService;
-        this.htmlSanitizer = htmlSanitizer; this.mediaStorageService = mediaStorageService;
+        this.htmlSanitizer = htmlSanitizer; this.mediaStorageService = mediaStorageService; this.engagementService = engagementService;
     }
 
     @Transactional(readOnly = true)
-    public List<AdminStoryResponse> listAdmin(String search, String status, UUID categoryId, int page, int limit) {
+    public List<AdminStoryResponse> listAdmin(String search, String status, UUID categoryId, Boolean breaking, int page, int limit) {
         StoryStatus parsed = parseStatus(status);
         String normalizedSearch = search == null ? "" : search.trim().toLowerCase(Locale.ROOT);
-        return storyRepository.findAdmin(normalizedSearch, parsed, categoryId, PageRequest.of(Math.max(page, 0), Math.min(Math.max(limit, 1), 100))).stream().map(AdminStoryResponse::from).toList();
+        return storyRepository.findAdmin(normalizedSearch, parsed, categoryId, breaking, PageRequest.of(Math.max(page, 0), Math.min(Math.max(limit, 1), 100))).stream().map(AdminStoryResponse::from).toList();
     }
 
     @Transactional(readOnly = true)
@@ -106,7 +108,7 @@ public class StoryService {
     }
 
     @Transactional(readOnly = true)
-    public FeedResponse publicFeed(String categorySlug, String tagSlug, int requestedLimit, String cursor) {
+    public FeedResponse publicFeed(String categorySlug, String tagSlug, int requestedLimit, String cursor, UUID currentUserId) {
         int limit = Math.min(Math.max(requestedLimit, 1), 50); Cursor decoded = decodeCursor(cursor);
         String category = blankToNull(categorySlug); String tag = blankToNull(tagSlug);
         List<Story> stories = decoded == null
@@ -114,12 +116,14 @@ public class StoryService {
                 : storyRepository.findPublishedFeedAfter(category, tag, decoded.publishedAt(), decoded.id(), PageRequest.of(0, limit + 1));
         boolean hasMore = stories.size() > limit; if (hasMore) stories = stories.subList(0, limit);
         String next = hasMore && !stories.isEmpty() ? encodeCursor(stories.get(stories.size() - 1)) : null;
-        return new FeedResponse(stories.stream().map(StorySummaryResponse::from).toList(), next, hasMore);
+        Map<UUID, EngagementService.StoryEngagement> engagement = engagementService.forStories(stories.stream().map(Story::getId).toList(), currentUserId);
+        return new FeedResponse(stories.stream().map(story -> StorySummaryResponse.from(story, engagement.get(story.getId()))).toList(), next, hasMore);
     }
 
     @Transactional(readOnly = true)
-    public StoryResponse publicStory(String slug) {
-        return StoryResponse.from(storyRepository.findWithDetailsBySlugAndStatus(slug, StoryStatus.PUBLISHED).orElseThrow(() -> notFound("STORY_NOT_FOUND", "Story not found")));
+    public StoryResponse publicStory(String slug, UUID currentUserId) {
+        Story story = storyRepository.findWithDetailsBySlugAndStatus(slug, StoryStatus.PUBLISHED).orElseThrow(() -> notFound("STORY_NOT_FOUND", "Story not found"));
+        return StoryResponse.from(story, engagementService.forStories(List.of(story.getId()), currentUserId).get(story.getId()));
     }
 
     private Story requireDetails(UUID id) { return storyRepository.findWithDetailsById(id).orElseThrow(() -> notFound("STORY_NOT_FOUND", "Story not found")); }

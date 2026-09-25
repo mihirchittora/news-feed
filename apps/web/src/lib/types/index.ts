@@ -110,6 +110,10 @@ export type StorySummary = {
   media: StoryMedia[];
   publishedAt?: string | null;
   authorName: string;
+  isBreaking: boolean;
+  likeCount: number;
+  commentCount: number;
+  likedByCurrentUser: boolean;
 };
 
 export type PublicStory = StorySummary & { body: string };
@@ -130,6 +134,86 @@ export type AdminStory = {
   publishedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  isBreaking: boolean;
+  breakingStartedAt?: string | null;
+  breakingUntil?: string | null;
+  breakingActive: boolean;
 };
 
 export type FeedResponse = { items: StorySummary[]; nextCursor?: string | null; hasMore: boolean };
+
+export type BreakingNewsItem = {
+  id: string;
+  slug: string;
+  title: string;
+  summary?: string | null;
+  category?: PublicCategory | null;
+  media: StoryMedia[];
+  publishedAt?: string | null;
+  breakingStartedAt: string;
+  breakingUntil?: string | null;
+};
+
+export type PublicBreakingNewsResponse = { items: BreakingNewsItem[] };
+
+export type AdminBreakingNewsItem = {
+  id: string;
+  slug: string;
+  title: string;
+  status: "DRAFT" | "PUBLISHED" | "UNPUBLISHED" | string;
+  categoryName?: string | null;
+  breakingStartedAt: string;
+  breakingUntil?: string | null;
+  active: boolean;
+};
+
+export type AdminBreakingNewsResponse = { items: AdminBreakingNewsItem[] };
+
+export type StoryEngagement = {
+  likeCount: number;
+  commentCount: number;
+  likedByCurrentUser: boolean;
+};
+
+export type CommentStatus = "VISIBLE" | "HIDDEN" | "DELETED";
+
+export type CommentAuthor = { id: string; name: string };
+
+export type Comment = {
+  id: string;
+  body: string;
+  author: CommentAuthor;
+  parentCommentId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  edited: boolean;
+  likeCount: number;
+  likedByCurrentUser: boolean;
+  ownedByCurrentUser: boolean;
+};
+
+export type CommentPage = { items: Comment[]; nextCursor?: string | null; hasMore: boolean };
+
+export type CreateCommentRequest = { body: string; parentCommentId?: string | null };
+
+export type UpdateCommentRequest = { body: string };
+
+export type CommentEngagement = { likeCount: number; likedByCurrentUser: boolean };
+
+export type ModerationRequest = { reason?: string };
+
+export type AdminComment = {
+  id: string;
+  body: string;
+  author: CommentAuthor;
+  story: { id: string; title: string; slug: string };
+  status: CommentStatus;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+  moderatedAt?: string | null;
+  moderatedBy?: CommentAuthor | null;
+  moderationReason?: string | null;
+};
+
+export type AdminCommentPage = { items: AdminComment[]; page: number; limit: number; hasMore: boolean };

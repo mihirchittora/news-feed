@@ -40,6 +40,9 @@ public class Story {
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private StoryStatus status;
     @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(name = "author_id", nullable = false) private User author;
     @Column(name = "published_at") private Instant publishedAt;
+    @Column(name = "is_breaking", nullable = false) private boolean breaking;
+    @Column(name = "breaking_started_at") private Instant breakingStartedAt;
+    @Column(name = "breaking_until") private Instant breakingUntil;
     @Column(name = "created_at", nullable = false, updatable = false) private Instant createdAt;
     @Column(name = "updated_at", nullable = false) private Instant updatedAt;
     @ManyToMany(fetch = FetchType.LAZY)
@@ -63,6 +66,9 @@ public class Story {
     public StoryStatus getStatus() { return status; }
     public User getAuthor() { return author; }
     public Instant getPublishedAt() { return publishedAt; }
+    public boolean isBreaking() { return breaking; }
+    public Instant getBreakingStartedAt() { return breakingStartedAt; }
+    public Instant getBreakingUntil() { return breakingUntil; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
     public Set<Tag> getTags() { return tags; }
@@ -73,5 +79,15 @@ public class Story {
         for (int i = 0; i < media.size(); i++) { StoryMedia item = media.get(i); item.setStory(this); item.setSortOrder(i); this.media.add(item); }
     }
     public void publish() { this.status = StoryStatus.PUBLISHED; if (publishedAt == null) publishedAt = Instant.now(); }
-    public void unpublish() { this.status = StoryStatus.UNPUBLISHED; }
+    public void unpublish() { this.status = StoryStatus.UNPUBLISHED; clearBreaking(); }
+    public void enableBreaking(Instant startedAt, Instant until) { this.breaking = true; this.breakingStartedAt = startedAt; this.breakingUntil = until; }
+    public void updateBreakingUntil(Instant until) { this.breakingUntil = until; }
+    public void clearBreaking() { this.breaking = false; this.breakingStartedAt = null; this.breakingUntil = null; }
+    public boolean isActivelyBreaking(Instant now) {
+        return status == StoryStatus.PUBLISHED
+                && breaking
+                && breakingStartedAt != null
+                && !breakingStartedAt.isAfter(now)
+                && (breakingUntil == null || breakingUntil.isAfter(now));
+    }
 }

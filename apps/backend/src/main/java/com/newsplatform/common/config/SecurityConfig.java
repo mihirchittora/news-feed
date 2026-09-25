@@ -46,11 +46,14 @@ public class SecurityConfig {
                                 "/api/v1/categories",
                                 "/api/v1/feed",
                                 "/api/v1/feed/**",
+                                "/api/v1/breaking-news",
+                                "/api/v1/stories/*/comments",
                                 "/api/v1/media/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/error"
                         ).permitAll()
+                        .requestMatchers("/api/v1/stories/*/like", "/api/v1/comments/**").authenticated()
                         .requestMatchers("/api/v1/admin/**").authenticated()
                         .requestMatchers("/api/v1/users/me").authenticated()
                         .anyRequest().denyAll()

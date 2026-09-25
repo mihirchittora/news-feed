@@ -12,7 +12,7 @@ import { FormEvent, useState } from "react";
 
 type FormErrors = Partial<Record<"email" | "password", string>>;
 
-export function LoginForm({ registrationSuccess = false }: { registrationSuccess?: boolean }) {
+export function LoginForm({ registrationSuccess = false, nextPath }: { registrationSuccess?: boolean; nextPath?: string }) {
   const { login } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -37,7 +37,7 @@ export function LoginForm({ registrationSuccess = false }: { registrationSuccess
     setIsSubmitting(true);
     try {
       const user = await login({ email: email.trim(), password });
-      router.replace(user.role === "ADMIN" ? "/admin/dashboard" : "/");
+      router.replace(nextPath && nextPath.startsWith("/") ? nextPath : user.role === "ADMIN" ? "/admin/dashboard" : "/");
     } catch (error) {
       setServerError(error instanceof ApiClientError ? error.message : "Unable to sign in. Please check your email and password.");
     } finally {

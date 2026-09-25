@@ -1,8 +1,8 @@
-# News Platform — Milestone 2
+# News Platform — Milestone 4
 
-Milestone 1 is a modular-monolith foundation for a digital news platform. It includes account registration, login, stateless JWT authentication, role authorization, the current-user API, an initial admin bootstrap, and the first admin dashboard shell.
+Milestones 1–3 provide the modular-monolith foundation for a digital news platform: authentication, configurable RBAC, editorial publishing, media, chronological feeds, likes, comments, replies, and moderation.
 
-Milestone 2 adds the editorial publishing workflow: categories, normalized reusable tags, stories, media, draft/publish lifecycle, public feed, filtering, detail pages, and permission-aware admin screens. Likes, comments, breaking news, newspaper editions, advertisements, notifications, recommendations, and AI features remain out of scope.
+Milestone 4 adds a simple editorial Breaking News flag to published stories. Breaking state is calculated from publication status and timestamps, expires automatically without a background worker, and is managed with the existing `BREAKING_NEWS_MANAGE` permission. Newspaper editions, advertisements, push notifications, recommendations, WebSockets, and AI features remain out of scope.
 
 ## Architecture
 
@@ -43,7 +43,7 @@ The backend imports the root `.env` when run from `apps/backend`. The frontend d
 The macOS-friendly standalone Compose command builds and starts PostgreSQL, the Spring Boot API, and the Next.js app together:
 
 ```bash
-docker-compose up --build -d
+docker compose up --build -d
 docker-compose ps
 ```
 
@@ -64,7 +64,7 @@ The default host ports are configurable through `.env`: `POSTGRES_PORT`, `BACKEN
 POSTGRES_PORT=5432 docker-compose up --build -d
 ```
 
-The backend connects to the Compose service name `postgres` inside the Docker network, while the browser uses `NEXT_PUBLIC_API_URL=http://localhost:8080` baked into the web image at build time.
+The backend connects to the Compose service name `postgres` inside the Docker network, while the browser uses `NEXT_PUBLIC_API_URL=http://localhost:8080` baked into the web image at build time. `BREAKING_NEWS_DEFAULT_DURATION_MINUTES` controls the default expiry when an editor does not choose one.
 
 ## Run PostgreSQL for local app development
 
@@ -130,11 +130,15 @@ If an account already exists for that email, startup does nothing. It never over
 | `GET` | `/api/v1/categories` | Public | List active categories |
 | `GET` | `/api/v1/feed` | Public | Chronological published feed; supports `category`, `tag`, `limit`, `cursor` |
 | `GET` | `/api/v1/feed/{slug}` | Public | Published story detail |
+| `GET` | `/api/v1/breaking-news` | Public | Active Breaking News, newest first |
 | `GET/POST/PUT/DELETE` | `/api/v1/admin/categories` | `CATEGORY_MANAGE` | Manage categories |
 | `GET/POST/PUT/DELETE` | `/api/v1/admin/tags` | `TAG_MANAGE` | Manage normalized reusable tags |
 | `GET/POST/PUT/DELETE` | `/api/v1/admin/stories` | Story permissions | Manage story drafts and relations |
 | `POST` | `/api/v1/admin/stories/{id}/publish` | `STORY_PUBLISH` | Publish a complete story |
 | `POST` | `/api/v1/admin/stories/{id}/unpublish` | `STORY_PUBLISH` | Remove a story from public views |
+| `GET` | `/api/v1/admin/breaking-news` | `BREAKING_NEWS_MANAGE` | List active or expired breaking stories |
+| `POST` | `/api/v1/admin/stories/{id}/breaking` | `BREAKING_NEWS_MANAGE` | Enable Breaking News or update expiry |
+| `DELETE` | `/api/v1/admin/stories/{id}/breaking` | `BREAKING_NEWS_MANAGE` | Remove Breaking News state |
 | `POST` | `/api/v1/admin/media` | `STORY_CREATE` or `STORY_EDIT` | Store an image/video through the media abstraction |
 
 Validation and security errors use one response shape:
@@ -154,7 +158,7 @@ Swagger UI is available at `http://localhost:8080/swagger-ui/index.html` when th
 
 ## Frontend routes
 
-- `/` — public chronological home feed
+- `/` — public Breaking News area and chronological home feed
 - `/category/[slug]` — category feed
 - `/tag/[slug]` — tag results feed
 - `/story/[slug]` — responsive story detail with media
@@ -163,6 +167,7 @@ Swagger UI is available at `http://localhost:8080/swagger-ui/index.html` when th
 - `/profile` — authenticated account view
 - `/admin/dashboard` — admin-only dashboard shell
 - `/admin/stories`, `/admin/stories/new`, `/admin/stories/[id]` — story list, editor, preview, media, publish/unpublish, delete
+- `/admin/breaking-news` — active and recently expired Breaking News management
 - `/admin/categories` — category management and ordering
 - `/admin/tags` — tag management and search
 - `/403` — signed-in users without admin access (`/forbidden` remains a compatibility alias)
@@ -171,7 +176,7 @@ The non-public pages use client-side guards for responsive navigation while ever
 
 ## Editorial schema
 
-Flyway creates `categories`, `tags`, `stories`, `story_tags`, and `story_media` in addition to the Milestone 1 tables. Stories use `DRAFT`, `PUBLISHED`, and `UNPUBLISHED` states; public queries only select `PUBLISHED` stories ordered by `published_at DESC, id DESC`. Story bodies are stored as sanitized HTML with paragraph, heading, emphasis, links, and list elements allowed. Media binaries never enter PostgreSQL: the `MediaStorageService` interface currently uses a local file adapter, with a Docker named volume for development.
+Flyway creates `categories`, `tags`, `stories`, `story_tags`, and `story_media` in addition to the Milestone 1 tables. Migration V7 adds `stories.is_breaking`, `breaking_started_at`, and `breaking_until`, plus a partial index for active published breaking queries. Stories use `DRAFT`, `PUBLISHED`, and `UNPUBLISHED` states; public queries only select `PUBLISHED` stories ordered by `published_at DESC, id DESC`, while Breaking News uses the active timestamp window and `breaking_started_at DESC`. Story bodies are stored as sanitized HTML with paragraph, heading, emphasis, links, and list elements allowed. Media binaries never enter PostgreSQL: the `MediaStorageService` interface currently uses a local file adapter, with a Docker named volume for development.
 
 Flyway creates `users` with:
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, FileText, LayoutDashboard, MessageSquare, Megaphone, Settings2, Tags, Users, X } from "lucide-react";
+import { BookOpen, FileText, LayoutDashboard, MessageSquare, Megaphone, Radio, Settings2, Tags, Users, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -8,9 +8,10 @@ import { useAuth } from "@/components/auth/AuthProvider";
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/admin/dashboard", permission: null },
   { label: "Stories", icon: FileText, href: "/admin/stories", permission: "STORY_VIEW_ADMIN" },
+  { label: "Breaking News", icon: Radio, href: "/admin/breaking-news", permission: "BREAKING_NEWS_MANAGE" },
   { label: "Categories", icon: Tags, href: "/admin/categories", permission: "CATEGORY_MANAGE" },
   { label: "Tags", icon: Tags, href: "/admin/tags", permission: "TAG_MANAGE" },
-  { label: "Comments", icon: MessageSquare, href: "#", permission: "COMMENT_MODERATE" },
+  { label: "Comments", icon: MessageSquare, href: "/admin/comments", permission: "COMMENT_MODERATE" },
   { label: "Newspaper", icon: BookOpen, href: "#", permission: "NEWSPAPER_VIEW_ADMIN" },
   { label: "Advertisements", icon: Megaphone, href: "#", permission: "AD_VIEW_ADMIN" },
   { label: "Staff Users", icon: Users, href: "/admin/staff", permission: "STAFF_VIEW" },

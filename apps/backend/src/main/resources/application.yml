@@ -44,6 +44,10 @@ app:
     public-url: ${MEDIA_PUBLIC_URL:http://localhost:8080}
     max-image-upload-size: ${MAX_IMAGE_UPLOAD_SIZE:10485760}
     max-video-upload-size: ${MAX_VIDEO_UPLOAD_SIZE:52428800}
+  comments:
+    max-length: ${COMMENT_MAX_LENGTH:2000}
+  breaking-news:
+    default-duration-minutes: ${BREAKING_NEWS_DEFAULT_DURATION_MINUTES:120}
 
 springdoc:
   swagger-ui:
