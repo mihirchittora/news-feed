@@ -37,7 +37,8 @@ export function LoginForm({ registrationSuccess = false, nextPath }: { registrat
     setIsSubmitting(true);
     try {
       const user = await login({ email: email.trim(), password });
-      router.replace(nextPath && nextPath.startsWith("/") ? nextPath : user.role === "ADMIN" ? "/admin/dashboard" : "/");
+      const safeNext = nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//") ? nextPath : null;
+      router.replace(safeNext ?? (user.role === "ADMIN" ? "/admin/dashboard" : "/"));
     } catch (error) {
       setServerError(error instanceof ApiClientError ? error.message : "Unable to sign in. Please check your email and password.");
     } finally {

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import com.newsplatform.common.security.RequestCorrelationFilter;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -35,7 +36,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ApiError> handleMaxUpload(MaxUploadSizeExceededException exception, HttpServletRequest request) {
-        return error(HttpStatus.BAD_REQUEST, "MEDIA_TOO_LARGE", "The uploaded file exceeds the configured size limit", Map.of(), request);
+        return error(HttpStatus.PAYLOAD_TOO_LARGE, "MEDIA_TOO_LARGE", "The uploaded file exceeds the configured size limit", Map.of(), request);
     }
 
     @ExceptionHandler(DuplicateEmailException.class)
@@ -75,7 +76,12 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<ApiError> error(HttpStatus status, String code, String message, Map<String, String> errors, HttpServletRequest request) {
         return ResponseEntity.status(status).body(new ApiError(
-                Instant.now(), status.value(), code, message, errors, request.getRequestURI()
+                Instant.now(), status.value(), code, message, errors, request.getRequestURI(), requestId(request)
         ));
+    }
+
+    private String requestId(HttpServletRequest request) {
+        Object requestId = request.getAttribute(RequestCorrelationFilter.REQUEST_ID_ATTRIBUTE);
+        return requestId == null ? null : requestId.toString();
     }
 }

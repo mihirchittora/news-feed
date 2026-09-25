@@ -1,0 +1,15 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+app:
+  environment: production
+  security:
+    hsts-enabled: ${SECURITY_HSTS_ENABLED:true}
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

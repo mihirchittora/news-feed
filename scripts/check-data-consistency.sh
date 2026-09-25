@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+repo_root="$(cd "$script_dir/.." && pwd)"
+cd "$repo_root"
+
+env_file="${COMPOSE_ENV_FILE:-.env}"
+if [[ ! -f "$env_file" ]]; then
+  env_file=".env.example"
+fi
+if docker compose version >/dev/null 2>&1; then
+  compose=(docker compose --env-file "$env_file")
+elif command -v docker-compose >/dev/null 2>&1; then
+  compose=(docker-compose --env-file "$env_file")
+else
+  echo "Docker Compose plugin not found. Install Docker Desktop or Docker Compose v2." >&2
+  exit 1
+fi
+
+if [[ "${APP_ENVIRONMENT:-development}" == "production" ]]; then
+  echo "Running in report-only mode; no production rows will be changed."
+fi
+
+"${compose[@]}" exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" --set ON_ERROR_STOP=1 -f -' < "$script_dir/check-data-consistency.sql"
+
+echo "--- Docker media-volume references missing from disk ---"
+storage_sql="
+  SELECT storage_key FROM story_media WHERE storage_key IS NOT NULL
+  UNION
+  SELECT pdf_storage_key FROM newspaper_editions WHERE pdf_storage_key IS NOT NULL
+  UNION
+  SELECT cover_image_storage_key FROM newspaper_editions WHERE cover_image_storage_key IS NOT NULL
+  UNION
+  SELECT media_storage_key FROM advertisements WHERE media_storage_key IS NOT NULL
+  ORDER BY 1"
+"${compose[@]}" exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -At --set ON_ERROR_STOP=1 -c "$1"' -- "$storage_sql" | while IFS= read -r key; do
+    [[ -z "$key" ]] && continue
+    if [[ "$key" == *".."* || "$key" == /* || "$key" == *"\\"* ]]; then
+      echo "unsafe storage key: $key"
+      continue
+    fi
+    if ! "${compose[@]}" exec -T backend sh -c 'test -f "/data/media/$1"' -- "$key"; then
+      echo "$key"
+    fi
+  done

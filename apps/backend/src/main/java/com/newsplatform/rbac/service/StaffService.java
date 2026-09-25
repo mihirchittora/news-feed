@@ -129,6 +129,9 @@ public class StaffService {
 
     @Transactional
     public void completeSetup(StaffSetupRequest request) {
+        if (request.token() == null || request.token().isBlank()) {
+            throw new RbacException(HttpStatus.BAD_REQUEST, "INVALID_SETUP_TOKEN", "This setup link is invalid or expired");
+        }
         StaffSetupToken setupToken = setupTokenRepository.findByTokenHash(hash(request.token()))
                 .orElseThrow(() -> new RbacException(HttpStatus.BAD_REQUEST, "INVALID_SETUP_TOKEN", "This setup link is invalid or expired"));
         if (!setupToken.isUsable(Instant.now()) || setupToken.getUser().getStatus() != UserStatus.PENDING_SETUP) {

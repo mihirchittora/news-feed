@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
+import com.newsplatform.common.security.RequestCorrelationFilter;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -23,8 +24,9 @@ public class SecurityErrorWriter {
         response.setStatus(status);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
+        Object requestId = request.getAttribute(RequestCorrelationFilter.REQUEST_ID_ATTRIBUTE);
         objectMapper.writeValue(response.getWriter(), new ApiError(
-                Instant.now(), status, code, message, Map.of(), request.getRequestURI()
+                Instant.now(), status, code, message, Map.of(), request.getRequestURI(), requestId == null ? null : requestId.toString()
         ));
     }
 }

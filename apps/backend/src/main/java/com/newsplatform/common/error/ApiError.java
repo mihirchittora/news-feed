@@ -9,6 +9,7 @@ public record ApiError(
         String code,
         String message,
         Map<String, String> errors,
-        String path
+        String path,
+        String requestId
 ) {
 }

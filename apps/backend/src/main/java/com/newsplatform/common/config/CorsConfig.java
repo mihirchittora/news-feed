@@ -14,14 +14,26 @@ import java.util.List;
 public class CorsConfig {
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource(@Value("${app.frontend-url}") String frontendUrls) {
+    public CorsConfigurationSource corsConfigurationSource(
+            @Value("${app.frontend-url}") String frontendUrls,
+            @Value("${app.environment:development}") String environment
+    ) {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.stream(frontendUrls.split(","))
+        List<String> configuredOrigins = Arrays.stream(frontendUrls.split(","))
                 .map(String::trim)
                 .filter(origin -> !origin.isBlank())
-                .toList());
+                .toList();
+        if (configuredOrigins.stream().anyMatch("*"::equals)) {
+            throw new IllegalStateException("FRONTEND_URL must contain explicit origins; '*' is not allowed");
+        }
+        List<String> origins = new java.util.ArrayList<>(configuredOrigins);
+        if ("development".equalsIgnoreCase(environment) && !origins.contains("http://127.0.0.1:3000")) {
+            origins.add("http://127.0.0.1:3000");
+        }
+        configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Request-Id"));
+        configuration.setExposedHeaders(List.of("X-Request-Id"));
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

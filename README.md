@@ -1,8 +1,8 @@
-# News Platform — Milestone 7
+# News Platform — Milestone 8
 
 Milestones 1–3 provide the modular-monolith foundation for a digital news platform: authentication, configurable RBAC, editorial publishing, media, chronological feeds, likes, comments, replies, and moderation.
 
-Milestone 4 adds a simple editorial Breaking News flag to published stories. Milestone 5 adds a two-level category hierarchy and a protected Daily Newspaper archive. Milestone 6 adds operational advertisements. Milestone 7 adds a real-data, permission-filtered admin dashboard and reporting view. Newspaper metadata and covers are public; PDF documents require an authenticated account and a published edition. Push notifications, recommendations, WebSockets, subscriptions, payments, public analytics, user tracking, and ad analytics remain out of scope.
+Milestone 4 adds a simple editorial Breaking News flag to published stories. Milestone 5 adds a two-level category hierarchy and a protected Daily Newspaper archive. Milestone 6 adds operational advertisements. Milestone 7 adds a real-data, permission-filtered admin dashboard and reporting view. Milestone 8 hardens the launch path with append-only integrity constraints, upload/content validation, request correlation, abuse throttling, security headers, Actuator probes/metrics, production configuration, Docker health ordering, sitemap/robots, and operational documentation. Newspaper metadata and covers are public; PDF documents require an authenticated account and a published edition. Push notifications, recommendations, WebSockets, subscriptions, payments, public analytics, user tracking, and ad analytics remain out of scope.
 
 ## Architecture
 
@@ -20,63 +20,70 @@ The backend is a modular monolith. Domain code is separated into `auth`, `user`,
 
 ## Prerequisites
 
-- Java 21
-- Maven 3.9+
-- Node.js 20+
-- npm
-- Docker and Docker Compose
+- Docker Desktop with the Compose plugin on Windows or macOS, or Docker Engine with `docker compose` on Linux.
+- PowerShell on Windows only when using the optional `.ps1` helper scripts.
+
+The supported application workflow does not require host-installed Java, Maven, Node.js, npm, or PostgreSQL. Those tools are present only inside the build/runtime containers. Optional local test commands are listed separately below.
+
+If `docker compose` reports `unknown command: compose`, the Docker CLI is missing its Compose v2 plugin. Install or enable the Compose plugin in Docker Desktop/Docker Engine. On older installations that provide the standalone compatible command, `docker-compose` can be used as a temporary local fallback; Docker Desktop and clean-checkout verification should use `docker compose`.
 
 ## Environment setup
 
-From the repository root:
-
-```bash
-cp .env.example .env
-```
-
-`.env` is ignored by git. Replace `JWT_SECRET` with a random value of at least 32 bytes for any shared environment. The included values are development placeholders only.
-
-The backend imports the root `.env` when run from `apps/backend`. The frontend defaults to `http://localhost:8080`; set `NEXT_PUBLIC_API_URL` in `apps/web/.env.local` if the API runs elsewhere. Local media defaults to `./data/media`; Docker uses the persistent `news_media_data` volume mounted at `/data/media`.
-
-## Run the full stack with Docker Compose
-
-The macOS-friendly standalone Compose command builds and starts PostgreSQL, the Spring Boot API, and the Next.js app together:
+From the repository root, no environment file is required for the development defaults:
 
 ```bash
 docker compose up --build -d
-docker-compose ps
+```
+
+To customize the defaults, copy `.env.example` to `.env` using the file manager, or use `cp .env.example .env` in a POSIX shell or `Copy-Item .env.example .env` in PowerShell. `.env` is ignored by git. Replace `JWT_SECRET` with a random value of at least 32 bytes for any shared environment. The included values are development placeholders only.
+
+`APP_ENVIRONMENT=production` activates fail-fast checks for non-development JWT/database settings, explicit HTTPS CORS origins, and HSTS. Production configuration must supply secrets through the environment or secret manager; do not bake them into images.
+
+The frontend defaults to `http://localhost:8080`; Docker uses the persistent `news_media_data` named volume mounted at `/data/media`. No host path is mounted into the application containers.
+
+## Run the full stack with Docker Compose
+
+The platform-independent Compose command builds and starts PostgreSQL, the Spring Boot API, and the Next.js app together:
+
+```text
+docker compose up --build -d
+docker compose ps
 ```
 
 Open `http://localhost:3000`. The API is available at `http://localhost:8080`, and Swagger is available at `http://localhost:8080/swagger-ui/index.html`.
 
 To follow logs or stop the stack:
 
-```bash
-docker-compose logs -f backend
-docker-compose down
+```text
+docker compose logs -f backend
+docker compose down
 ```
 
-Uploaded Docker development media survives `docker-compose down` and normal restarts. To intentionally clear only the media volume, run `docker volume rm news-feed_news_media_data` after stopping the stack. `docker-compose down -v` clears the database and media volumes together.
+The backend exposes public health checks at `/actuator/health`, `/actuator/health/liveness`, and `/actuator/health/readiness`; only health, liveness/readiness, and metrics are exposed under Actuator. Use the `X-Request-Id` response header to correlate API errors with structured logs.
 
-The default host ports are configurable through `.env`: `POSTGRES_PORT`, `BACKEND_PORT`, and `WEB_PORT`. This project defaults PostgreSQL to host port 5440 because 5432 is commonly occupied by an existing local PostgreSQL or Docker service.
+Uploaded Docker development media survives `docker compose down` and normal restarts. `docker compose down -v` intentionally clears the Compose-managed database and media named volumes together.
 
-```bash
-POSTGRES_PORT=5432 docker-compose up --build -d
+The default host ports are configurable through `.env`: `POSTGRES_PORT`, `BACKEND_PORT`, and `WEB_PORT`. This project defaults PostgreSQL to host port 5440 because 5432 is commonly occupied by an existing local PostgreSQL or Docker service. Edit `.env` instead of using shell-specific inline environment syntax.
+
+```text
+POSTGRES_PORT=5432
 ```
 
 The backend connects to the Compose service name `postgres` inside the Docker network, while the browser uses `NEXT_PUBLIC_API_URL=http://localhost:8080` baked into the web image at build time. `BREAKING_NEWS_DEFAULT_DURATION_MINUTES` controls the default expiry when an editor does not choose one.
 
 ## Run PostgreSQL for local app development
 
-```bash
-docker-compose up -d postgres
+```text
+docker compose up -d postgres
 ```
 
-If your Docker installation uses the newer integrated command, `docker compose` is equivalent.
+PostgreSQL is exposed at `localhost:5440` by default with the development database `news_platform`. Flyway runs the migrations automatically when the backend starts.
 
-PostgreSQL is exposed at `localhost:5440` by default with the development database `news_platform`. Set `POSTGRES_PORT=5432` if that port is free on your machine. Flyway runs the user/RBAC migrations plus `V3__add_editorial_publishing.sql` and `V4__fix_media_duration_type.sql` automatically when the backend starts.
+## Optional local-only development commands
 
-## Run the backend
+The following commands are not required for Docker Compose and require local Java/Maven or Node/npm installations. Use the containers above for the supported cross-platform path.
+
+### Run the backend locally
 
 ```bash
 cd apps/backend
@@ -89,7 +96,7 @@ The API runs at `http://localhost:8080`.
 
 `/admin/dashboard` loads its operational data from `GET /api/v1/admin/dashboard?period=TODAY`, with `LAST_7_DAYS` and `LAST_30_DAYS` also supported. Periods use calendar-day boundaries in the server-side `APP_TIMEZONE` (default `Asia/Kolkata`), while persisted timestamps remain UTC. The API returns permission-filtered sections rather than requiring one staff member to hold every module permission. See [`docs/dashboard-metrics.md`](docs/dashboard-metrics.md) for metric definitions, timezone semantics, and RBAC behavior.
 
-## Run the frontend
+### Run the frontend locally
 
 In a second terminal:
 
@@ -191,6 +198,18 @@ Swagger UI is available at `http://localhost:8080/swagger-ui/index.html` when th
 
 The non-public pages use client-side guards for responsive navigation while every API permission is enforced by Spring Security on the server.
 
+## Operations and verification
+
+- [`docs/authorization-matrix.md`](docs/authorization-matrix.md) — backend permission matrix and RBAC safety rules
+- [`docs/architecture.md`](docs/architecture.md) — actual modular-monolith runtime boundaries
+- [`docs/backup-and-recovery.md`](docs/backup-and-recovery.md) — database/media backup and recovery procedures
+- [`docs/production-readiness.md`](docs/production-readiness.md) — release checklist and current blockers
+- `scripts/check-data-consistency.sh` / `scripts/check-data-consistency.ps1` — report-only integrity and Docker-volume diagnostic
+- `scripts/seed-performance.sh` / `scripts/seed-performance.ps1` — development-only deterministic representative dataset; it refuses production
+- `scripts/smoke-critical-api.sh` / `scripts/smoke-critical-api.ps1` — health/auth/me/RBAC/error API smoke test against a running backend
+
+The Unix helpers prefer `docker compose` and fall back to the standalone `docker-compose` command when the v2 plugin is unavailable; they do not require host PostgreSQL. The PowerShell helpers provide the equivalent Windows path. Seed data is never loaded automatically by the application or Compose.
+
 ## Editorial schema
 
 Flyway creates `categories`, `tags`, `stories`, `story_tags`, and `story_media` in addition to the Milestone 1 tables. Migration V7 adds `stories.is_breaking`, `breaking_started_at`, and `breaking_until`, plus a partial index for active published breaking queries. Stories use `DRAFT`, `PUBLISHED`, and `UNPUBLISHED` states; public queries only select `PUBLISHED` stories ordered by `published_at DESC, id DESC`, while Breaking News uses the active timestamp window and `breaking_started_at DESC`. Story bodies are stored as sanitized HTML with paragraph, heading, emphasis, links, and list elements allowed. Media binaries never enter PostgreSQL: the `MediaStorageService` interface currently uses a local file adapter, with a Docker named volume for development.
@@ -210,7 +229,17 @@ Flyway creates `users` with:
 
 ## Verification commands
 
-Backend:
+The cross-platform verification path is:
+
+```text
+docker compose config
+docker compose build
+docker compose up --build -d
+```
+
+Then run `scripts/smoke-critical-api.sh` on Unix-like systems or `scripts/smoke-critical-api.ps1` in PowerShell.
+
+Optional local backend tests:
 
 ```bash
 cd apps/backend
@@ -218,7 +247,7 @@ mvn test
 mvn package
 ```
 
-Frontend:
+Optional local frontend tests:
 
 ```bash
 cd apps/web

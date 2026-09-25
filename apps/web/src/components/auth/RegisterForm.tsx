@@ -44,7 +44,8 @@ export function RegisterForm({ nextPath }: { nextPath?: string }) {
     setIsSubmitting(true);
     try {
       await register({ name: form.name.trim(), email: form.email.trim(), password: form.password });
-      router.replace(`/login?registered=1${nextPath && nextPath.startsWith("/") ? `&next=${encodeURIComponent(nextPath)}` : ""}`);
+      const safeNext = nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//") ? nextPath : null;
+      router.replace(`/login?registered=1${safeNext ? `&next=${encodeURIComponent(safeNext)}` : ""}`);
     } catch (error) {
       const apiError = error instanceof ApiClientError ? error : null;
       if (apiError?.errors) {

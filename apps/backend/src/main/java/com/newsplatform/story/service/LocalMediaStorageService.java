@@ -35,7 +35,16 @@ public class LocalMediaStorageService implements MediaStorageService {
             String extension = type == StoryMediaType.VIDEO ? ".mp4" : mime.equals("image/png") ? ".png" : mime.equals("image/webp") ? ".webp" : ".jpg";
             String key = UUID.randomUUID() + extension; Files.createDirectories(storagePath); Path destination = storagePath.resolve(key).normalize();
             if (!destination.getParent().equals(storagePath)) throw bad("INVALID_MEDIA_KEY", "Invalid media path");
-            try (InputStream input = file.getInputStream()) { Files.copy(input, destination, StandardCopyOption.REPLACE_EXISTING); }
+            Path temporary = Files.createTempFile(storagePath, ".upload-", ".tmp");
+            try {
+                try (InputStream input = file.getInputStream()) { Files.copy(input, temporary, StandardCopyOption.REPLACE_EXISTING); }
+                if (file.getSize() >= 0 && Files.size(temporary) != file.getSize()) {
+                    throw bad("MEDIA_UPLOAD_INCOMPLETE", "The uploaded file could not be read completely");
+                }
+                moveIntoPlace(temporary, destination);
+            } finally {
+                Files.deleteIfExists(temporary);
+            }
             return new StoredMedia(key, mime, file.getSize(), publicUrl + "/api/v1/media/" + key);
         } catch (IOException ex) { throw new RbacException(HttpStatus.INTERNAL_SERVER_ERROR, "MEDIA_STORAGE_ERROR", "The media could not be stored"); }
     }
@@ -50,5 +59,9 @@ public class LocalMediaStorageService implements MediaStorageService {
         return type == StoryMediaType.VIDEO && header.length > 12 && ascii(header, 4, 4, "ftyp");
     }
     private boolean ascii(byte[] bytes, int start, int length, String value) { if (bytes.length < start + length) return false; for (int i = 0; i < length; i++) if (bytes[start + i] != value.charAt(i)) return false; return true; }
+    private void moveIntoPlace(Path source, Path destination) throws IOException {
+        try { Files.move(source, destination, java.nio.file.StandardCopyOption.ATOMIC_MOVE); }
+        catch (java.nio.file.AtomicMoveNotSupportedException ignored) { Files.move(source, destination, StandardCopyOption.REPLACE_EXISTING); }
+    }
     private RbacException bad(String code, String message) { return new RbacException(HttpStatus.BAD_REQUEST, code, message); }
 }

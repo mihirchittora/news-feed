@@ -1,0 +1,9 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+app:
+  environment: development
+  security:
+    hsts-enabled: false

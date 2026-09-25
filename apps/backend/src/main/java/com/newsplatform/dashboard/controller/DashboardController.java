@@ -26,7 +26,7 @@ public class DashboardController {
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyAuthority('STORY_VIEW_ADMIN', 'BREAKING_NEWS_MANAGE', 'COMMENT_MODERATE', 'NEWSPAPER_VIEW_ADMIN', 'AD_VIEW_ADMIN', 'CATEGORY_MANAGE', 'TAG_MANAGE', 'STAFF_VIEW', 'ROLE_VIEW', 'SUPER_ADMIN')")
     @Operation(summary = "Read the permission-filtered operational dashboard", security = @SecurityRequirement(name = "bearerAuth"))
     public DashboardResponse dashboard(
             @RequestParam(defaultValue = "TODAY") String period,

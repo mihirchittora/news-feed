@@ -18,4 +18,12 @@ class HtmlSanitizerTest {
     void removesJavascriptLinks() {
         assertThat(sanitizer.sanitize("<a href=\"javascript:alert(1)\">bad</a>")).doesNotContain("javascript:");
     }
+
+    @Test
+    void rejectsUnsafeProtocolsAndEmbeddedDocuments() {
+        String result = sanitizer.sanitize("<p onmouseover=alert(1)>Body</p><a href=\"data:text/html,evil\">bad</a><object data=\"x\"></object>");
+
+        assertThat(result).isEqualTo("<p>Body</p><a>bad</a>");
+        assertThat(result).doesNotContainIgnoringCase("onmouseover", "data:", "object");
+    }
 }

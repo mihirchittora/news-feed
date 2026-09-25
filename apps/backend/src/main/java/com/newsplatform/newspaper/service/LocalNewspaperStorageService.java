@@ -89,7 +89,17 @@ public class LocalNewspaperStorageService implements NewspaperStorageService {
         Files.createDirectories(directory);
         String key = storagePath.relativize(directory.resolve(UUID.randomUUID() + extension)).toString().replace(java.io.File.separatorChar, '/');
         Path destination = storagePath.resolve(key).normalize();
-        try (InputStream input = file.getInputStream()) { Files.copy(input, destination, StandardCopyOption.REPLACE_EXISTING); }
+        Path temporary = Files.createTempFile(directory, ".upload-", ".tmp");
+        try {
+            try (InputStream input = file.getInputStream()) { Files.copy(input, temporary, StandardCopyOption.REPLACE_EXISTING); }
+            if (file.getSize() >= 0 && Files.size(temporary) != file.getSize()) {
+                throw bad("UPLOAD_INCOMPLETE", "The uploaded file could not be read completely");
+            }
+            try { Files.move(temporary, destination, StandardCopyOption.ATOMIC_MOVE); }
+            catch (java.nio.file.AtomicMoveNotSupportedException ignored) { Files.move(temporary, destination, StandardCopyOption.REPLACE_EXISTING); }
+        } finally {
+            Files.deleteIfExists(temporary);
+        }
         return new StoredFile(key, mime, file.getSize());
     }
 
