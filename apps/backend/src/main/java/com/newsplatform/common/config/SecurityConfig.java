@@ -44,9 +44,13 @@ public class SecurityConfig {
                                 "/api/v1/auth/login",
                                 "/api/v1/health",
                                 "/api/v1/categories",
+                                "/api/v1/categories/**",
                                 "/api/v1/feed",
                                 "/api/v1/feed/**",
                                 "/api/v1/breaking-news",
+                                "/api/v1/newspapers",
+                                "/api/v1/newspapers/*",
+                                "/api/v1/newspapers/*/cover",
                                 "/api/v1/stories/*/comments",
                                 "/api/v1/media/**",
                                 "/swagger-ui/**",
@@ -56,6 +60,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/stories/*/like", "/api/v1/comments/**").authenticated()
                         .requestMatchers("/api/v1/admin/**").authenticated()
                         .requestMatchers("/api/v1/users/me").authenticated()
+                        .requestMatchers("/api/v1/newspapers/*/document").authenticated()
                         .anyRequest().denyAll()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

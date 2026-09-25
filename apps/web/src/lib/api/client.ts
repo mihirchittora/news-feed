@@ -2,6 +2,8 @@ import type { ApiError } from "@/lib/types";
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080").replace(/\/$/, "");
 
+export function apiUrl(path: string) { return `${API_BASE_URL}${path}`; }
+
 export class ApiClientError extends Error {
   status: number;
   code?: string;
@@ -25,7 +27,7 @@ export async function request<T>(path: string, options: RequestInit = {}, token?
 
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
+    response = await fetch(apiUrl(path), {
       ...options,
       headers,
       cache: "no-store",
@@ -57,4 +59,20 @@ export async function request<T>(path: string, options: RequestInit = {}, token?
   }
 
   return body as T;
+}
+
+export async function requestBlob(path: string, token: string): Promise<Blob> {
+  const headers = new Headers({ Authorization: `Bearer ${token}` });
+  let response: Response;
+  try {
+    response = await fetch(apiUrl(path), { headers, cache: "no-store" });
+  } catch {
+    throw new ApiClientError({ message: "The API is unavailable. Please try again." }, 0);
+  }
+  if (!response.ok) {
+    let body: Partial<ApiError> = {};
+    try { body = await response.json() as Partial<ApiError>; } catch { /* ignore malformed error bodies */ }
+    throw new ApiClientError({ message: typeof body.message === "string" ? body.message : "Could not load the newspaper." }, response.status);
+  }
+  return response.blob();
 }

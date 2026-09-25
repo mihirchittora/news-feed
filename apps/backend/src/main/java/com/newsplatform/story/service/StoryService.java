@@ -127,7 +127,12 @@ public class StoryService {
     }
 
     private Story requireDetails(UUID id) { return storyRepository.findWithDetailsById(id).orElseThrow(() -> notFound("STORY_NOT_FOUND", "Story not found")); }
-    private Category resolveCategory(UUID id) { return id == null ? null : categoryRepository.findById(id).orElseThrow(() -> notFound("CATEGORY_NOT_FOUND", "Category not found")); }
+    private Category resolveCategory(UUID id) {
+        if (id == null) return null;
+        Category category = categoryRepository.findById(id).orElseThrow(() -> notFound("CATEGORY_NOT_FOUND", "Category not found"));
+        if (categoryRepository.existsByParentId(id)) throw new RbacException(HttpStatus.BAD_REQUEST, "CATEGORY_NOT_LEAF", "Stories must use a leaf category when the parent has children");
+        return category;
+    }
     private Set<Tag> resolveTags(List<UUID> ids) {
         if (ids == null || ids.isEmpty()) return new HashSet<>();
         List<Tag> tags = tagRepository.findAllById(ids); if (tags.size() != new HashSet<>(ids).size()) throw new RbacException(HttpStatus.BAD_REQUEST, "INVALID_TAG", "One or more tags do not exist"); return new HashSet<>(tags);

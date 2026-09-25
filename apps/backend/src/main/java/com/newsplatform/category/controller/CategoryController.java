@@ -23,6 +23,7 @@ public class CategoryController {
     private final CategoryService service;
     public CategoryController(CategoryService service) { this.service = service; }
     @GetMapping("/categories") public List<PublicCategoryResponse> publicCategories() { return service.listPublic(); }
+    @GetMapping("/categories/{slug}") public PublicCategoryResponse publicCategory(@PathVariable String slug) { return service.publicBySlug(slug); }
     @GetMapping("/admin/categories") @PreAuthorize("hasAuthority('CATEGORY_MANAGE') or hasAuthority('SUPER_ADMIN')") @SecurityRequirement(name = "bearerAuth") public List<CategoryResponse> list() { return service.listAdmin(); }
     @GetMapping("/admin/categories/{id}") @PreAuthorize("hasAuthority('CATEGORY_MANAGE') or hasAuthority('SUPER_ADMIN')") @SecurityRequirement(name = "bearerAuth") public CategoryResponse get(@PathVariable UUID id) { return CategoryResponse.from(service.require(id)); }
     @PostMapping("/admin/categories") @ResponseStatus(HttpStatus.CREATED) @PreAuthorize("hasAuthority('CATEGORY_MANAGE') or hasAuthority('SUPER_ADMIN')") @SecurityRequirement(name = "bearerAuth") public CategoryResponse create(@Valid @RequestBody CategoryRequest request, @AuthenticationPrincipal AuthenticatedUser actor) { return service.create(request, actor.id()); }

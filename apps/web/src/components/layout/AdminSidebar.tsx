@@ -12,7 +12,7 @@ const navItems = [
   { label: "Categories", icon: Tags, href: "/admin/categories", permission: "CATEGORY_MANAGE" },
   { label: "Tags", icon: Tags, href: "/admin/tags", permission: "TAG_MANAGE" },
   { label: "Comments", icon: MessageSquare, href: "/admin/comments", permission: "COMMENT_MODERATE" },
-  { label: "Newspaper", icon: BookOpen, href: "#", permission: "NEWSPAPER_VIEW_ADMIN" },
+  { label: "Newspaper", icon: BookOpen, href: "/admin/newspapers", permission: "NEWSPAPER_VIEW_ADMIN" },
   { label: "Advertisements", icon: Megaphone, href: "#", permission: "AD_VIEW_ADMIN" },
   { label: "Staff Users", icon: Users, href: "/admin/staff", permission: "STAFF_VIEW" },
   { label: "Roles & Permissions", icon: Settings2, href: "/admin/roles", permission: "ROLE_VIEW" },

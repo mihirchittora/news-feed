@@ -1,6 +1,0 @@
-import type { Metadata } from "next";
-import { CategoryNav } from "@/components/public/CategoryNav";
-import { FeedList } from "@/components/public/FeedList";
-
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> { const { slug } = await params; const name = slug.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()); return { title: `${name} news`, description: `The latest ${name} stories from News Platform.` }; }
-export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) { const { slug } = await params; const name = slug.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()); return <main className="mx-auto max-w-6xl px-5 py-10 sm:py-14 lg:px-8"><div className="border-b border-line pb-8"><p className="text-xs font-bold uppercase tracking-[0.22em] text-coral">Category</p><h1 className="mt-3 font-display text-5xl font-bold capitalize tracking-[-0.06em] text-ink sm:text-7xl">{name}</h1><div className="mt-7"><CategoryNav /></div></div><section className="mt-8"><FeedList filter={`category=${encodeURIComponent(slug)}`} emptyTitle={`No ${name} stories yet`} emptyDescription="Check back soon for new reporting in this category." /></section></main>; }

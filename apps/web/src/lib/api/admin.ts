@@ -1,5 +1,5 @@
 import { request } from "@/lib/api/client";
-import type { AdminRole, AdminStory, Category, PermissionGroup, StaffUser, StoryMedia, Tag, User } from "@/lib/types";
+import type { AdminNewspaper, AdminRole, AdminStory, Category, PermissionGroup, StaffUser, StoryMedia, Tag, User } from "@/lib/types";
 
 export const adminApi = {
   me: (token: string) => request<User>("/api/v1/admin/me", {}, token),
@@ -27,8 +27,8 @@ export const adminApi = {
     request<void>("/api/v1/auth/staff-setup", { method: "POST", body: JSON.stringify(payload) }),
   categories: (token: string) => request<Category[]>("/api/v1/admin/categories", {}, token),
   category: (token: string, id: string) => request<Category>(`/api/v1/admin/categories/${id}`, {}, token),
-  createCategory: (token: string, payload: { name: string; slug?: string; description?: string; status: string; displayOrder: number }) => request<Category>("/api/v1/admin/categories", { method: "POST", body: JSON.stringify(payload) }, token),
-  updateCategory: (token: string, id: string, payload: { name: string; slug?: string; description?: string; status: string; displayOrder: number }) => request<Category>(`/api/v1/admin/categories/${id}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  createCategory: (token: string, payload: { name: string; slug?: string; description?: string; status: string; displayOrder: number; parentId?: string | null }) => request<Category>("/api/v1/admin/categories", { method: "POST", body: JSON.stringify(payload) }, token),
+  updateCategory: (token: string, id: string, payload: { name: string; slug?: string; description?: string; status: string; displayOrder: number; parentId?: string | null }) => request<Category>(`/api/v1/admin/categories/${id}`, { method: "PUT", body: JSON.stringify(payload) }, token),
   deleteCategory: (token: string, id: string) => request<void>(`/api/v1/admin/categories/${id}`, { method: "DELETE" }, token),
   tags: (token: string, query?: string) => request<Tag[]>(`/api/v1/admin/tags${query ? `?query=${encodeURIComponent(query)}` : ""}`, {}, token),
   createTag: (token: string, payload: { name: string; slug?: string }) => request<Tag>("/api/v1/admin/tags", { method: "POST", body: JSON.stringify(payload) }, token),
@@ -42,4 +42,13 @@ export const adminApi = {
   unpublishStory: (token: string, id: string) => request<AdminStory>(`/api/v1/admin/stories/${id}/unpublish`, { method: "POST" }, token),
   deleteStory: (token: string, id: string) => request<void>(`/api/v1/admin/stories/${id}`, { method: "DELETE" }, token),
   uploadMedia: (token: string, file: File, storyId?: string) => { const body = new FormData(); body.append("file", file); if (storyId) body.append("storyId", storyId); return request<StoryMedia>("/api/v1/admin/media", { method: "POST", body }, token); },
+  newspapers: (token: string) => request<AdminNewspaper[]>("/api/v1/admin/newspapers", {}, token),
+  newspaper: (token: string, id: string) => request<AdminNewspaper>(`/api/v1/admin/newspapers/${id}`, {}, token),
+  createNewspaper: (token: string, payload: { title: string; edition: string; editionDate: string }) => request<AdminNewspaper>("/api/v1/admin/newspapers", { method: "POST", body: JSON.stringify(payload) }, token),
+  updateNewspaper: (token: string, id: string, payload: { title: string; edition: string; editionDate: string }) => request<AdminNewspaper>(`/api/v1/admin/newspapers/${id}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  uploadNewspaperDocument: (token: string, id: string, file: File) => { const body = new FormData(); body.append("file", file); return request<AdminNewspaper>(`/api/v1/admin/newspapers/${id}/document`, { method: "POST", body }, token); },
+  uploadNewspaperCover: (token: string, id: string, file: File) => { const body = new FormData(); body.append("file", file); return request<AdminNewspaper>(`/api/v1/admin/newspapers/${id}/cover`, { method: "POST", body }, token); },
+  publishNewspaper: (token: string, id: string) => request<AdminNewspaper>(`/api/v1/admin/newspapers/${id}/publish`, { method: "POST" }, token),
+  unpublishNewspaper: (token: string, id: string) => request<AdminNewspaper>(`/api/v1/admin/newspapers/${id}/unpublish`, { method: "POST" }, token),
+  deleteNewspaper: (token: string, id: string) => request<void>(`/api/v1/admin/newspapers/${id}`, { method: "DELETE" }, token),
 };

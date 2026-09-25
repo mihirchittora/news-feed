@@ -40,6 +40,11 @@ export function StoryForm({ initialStory }: { initialStory?: AdminStory }) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [preview, setPreview] = useState(() => searchParams.get("preview") === "1");
+  const categoryRoots = categories.filter((category) => !category.parentId).sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name));
+  const categoryChildren = categories.reduce<Record<string, Category[]>>((groups, category) => {
+    if (category.parentId) (groups[category.parentId] ??= []).push(category);
+    return groups;
+  }, {});
 
   const canCreate = hasPermission("STORY_CREATE");
   const canEdit = hasPermission("STORY_EDIT");
@@ -161,7 +166,11 @@ export function StoryForm({ initialStory }: { initialStory?: AdminStory }) {
           <FormField id="category" label="Category">
             <select id="category" value={categoryId} onChange={(event) => setCategoryId(event.target.value)} disabled={Boolean(initialStory && !canEdit)} className="min-h-12 w-full rounded-xl border border-line bg-white px-4 text-[15px] text-ink outline-none focus:border-coral focus:ring-4 focus:ring-coral/10">
               <option value="">Choose a category</option>
-              {categories.filter((category) => category.status === "ACTIVE").map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+              {categoryRoots.filter((category) => category.status === "ACTIVE").map((root) => {
+                const nested = (categoryChildren[root.id] ?? []).filter((category) => category.status === "ACTIVE").sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name));
+                if (!nested.length) return <option key={root.id} value={root.id}>{root.name}</option>;
+                return <optgroup key={root.id} label={root.name}><option value={root.id} disabled>{root.name} (choose a subcategory)</option>{nested.map((child) => <option key={child.id} value={child.id}>↳ {child.name}</option>)}</optgroup>;
+              })}
             </select>
           </FormField>
           <FormField id="tags" label="Tags">

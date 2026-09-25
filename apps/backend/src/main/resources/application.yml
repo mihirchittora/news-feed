@@ -20,8 +20,8 @@ spring:
     locations: classpath:db/migration
   servlet:
     multipart:
-      max-file-size: ${MAX_VIDEO_UPLOAD_SIZE:52428800}
-      max-request-size: ${MAX_VIDEO_UPLOAD_SIZE:52428800}
+      max-file-size: ${MAX_NEWSPAPER_PDF_UPLOAD_SIZE:104857600}
+      max-request-size: ${MAX_NEWSPAPER_PDF_UPLOAD_SIZE:104857600}
 
 server:
   port: ${PORT:8080}
@@ -48,6 +48,8 @@ app:
     max-length: ${COMMENT_MAX_LENGTH:2000}
   breaking-news:
     default-duration-minutes: ${BREAKING_NEWS_DEFAULT_DURATION_MINUTES:120}
+  newspaper:
+    max-pdf-upload-size: ${MAX_NEWSPAPER_PDF_UPLOAD_SIZE:104857600}
 
 springdoc:
   swagger-ui:

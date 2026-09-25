@@ -1,8 +1,8 @@
-# News Platform — Milestone 4
+# News Platform — Milestone 5
 
 Milestones 1–3 provide the modular-monolith foundation for a digital news platform: authentication, configurable RBAC, editorial publishing, media, chronological feeds, likes, comments, replies, and moderation.
 
-Milestone 4 adds a simple editorial Breaking News flag to published stories. Breaking state is calculated from publication status and timestamps, expires automatically without a background worker, and is managed with the existing `BREAKING_NEWS_MANAGE` permission. Newspaper editions, advertisements, push notifications, recommendations, WebSockets, and AI features remain out of scope.
+Milestone 4 adds a simple editorial Breaking News flag to published stories. Milestone 5 adds a two-level category hierarchy and a protected Daily Newspaper archive. Newspaper metadata and covers are public; PDF documents require an authenticated account and a published edition. Advertisements, push notifications, recommendations, WebSockets, subscriptions, payments, and AI features remain out of scope.
 
 ## Architecture
 
@@ -128,6 +128,7 @@ If an account already exists for that email, startup does nothing. It never over
 | `GET` | `/api/v1/users/me` | Authenticated | Return the current user |
 | `GET` | `/api/v1/admin/me` | `ADMIN` only | Verify admin authorization |
 | `GET` | `/api/v1/categories` | Public | List active categories |
+| `GET` | `/api/v1/categories/{slug}` | Public | Read one active category and its children |
 | `GET` | `/api/v1/feed` | Public | Chronological published feed; supports `category`, `tag`, `limit`, `cursor` |
 | `GET` | `/api/v1/feed/{slug}` | Public | Published story detail |
 | `GET` | `/api/v1/breaking-news` | Public | Active Breaking News, newest first |
@@ -140,6 +141,14 @@ If an account already exists for that email, startup does nothing. It never over
 | `POST` | `/api/v1/admin/stories/{id}/breaking` | `BREAKING_NEWS_MANAGE` | Enable Breaking News or update expiry |
 | `DELETE` | `/api/v1/admin/stories/{id}/breaking` | `BREAKING_NEWS_MANAGE` | Remove Breaking News state |
 | `POST` | `/api/v1/admin/media` | `STORY_CREATE` or `STORY_EDIT` | Store an image/video through the media abstraction |
+| `GET` | `/api/v1/newspapers` | Public | List published newspaper metadata and covers |
+| `GET` | `/api/v1/newspapers/{id}` | Public | Read published newspaper metadata |
+| `GET` | `/api/v1/newspapers/{id}/document` | Authenticated | Stream a published newspaper PDF |
+| `GET/POST/PUT/DELETE` | `/api/v1/admin/newspapers` | Newspaper permissions | Manage editions and metadata |
+| `POST` | `/api/v1/admin/newspapers/{id}/document` | `NEWSPAPER_UPLOAD` or `NEWSPAPER_EDIT` | Upload or replace a PDF |
+| `POST` | `/api/v1/admin/newspapers/{id}/cover` | `NEWSPAPER_UPLOAD` or `NEWSPAPER_EDIT` | Upload or replace a cover |
+| `POST` | `/api/v1/admin/newspapers/{id}/publish` | `NEWSPAPER_PUBLISH` | Publish an edition |
+| `POST` | `/api/v1/admin/newspapers/{id}/unpublish` | `NEWSPAPER_PUBLISH` | Unpublish an edition |
 
 Validation and security errors use one response shape:
 
@@ -168,7 +177,10 @@ Swagger UI is available at `http://localhost:8080/swagger-ui/index.html` when th
 - `/admin/dashboard` — admin-only dashboard shell
 - `/admin/stories`, `/admin/stories/new`, `/admin/stories/[id]` — story list, editor, preview, media, publish/unpublish, delete
 - `/admin/breaking-news` — active and recently expired Breaking News management
-- `/admin/categories` — category management and ordering
+- `/admin/categories` — two-level category tree management and ordering
+- `/admin/newspapers`, `/admin/newspapers/new`, `/admin/newspapers/[id]` — newspaper upload, edit, publish, and archive management
+- `/newspaper` — public newspaper archive and metadata
+- `/newspaper/[id]` — authenticated PDF reader with an anonymous sign-in gate
 - `/admin/tags` — tag management and search
 - `/403` — signed-in users without admin access (`/forbidden` remains a compatibility alias)
 
@@ -177,6 +189,10 @@ The non-public pages use client-side guards for responsive navigation while ever
 ## Editorial schema
 
 Flyway creates `categories`, `tags`, `stories`, `story_tags`, and `story_media` in addition to the Milestone 1 tables. Migration V7 adds `stories.is_breaking`, `breaking_started_at`, and `breaking_until`, plus a partial index for active published breaking queries. Stories use `DRAFT`, `PUBLISHED`, and `UNPUBLISHED` states; public queries only select `PUBLISHED` stories ordered by `published_at DESC, id DESC`, while Breaking News uses the active timestamp window and `breaking_started_at DESC`. Story bodies are stored as sanitized HTML with paragraph, heading, emphasis, links, and list elements allowed. Media binaries never enter PostgreSQL: the `MediaStorageService` interface currently uses a local file adapter, with a Docker named volume for development.
+
+Flyway V8 adds `categories.parent_id`, a self foreign key with `RESTRICT` deletion, sibling-name uniqueness, and hierarchy indexes. The application only permits top-level parents and rejects third-level categories; story assignment rejects non-leaf categories when children exist. Public category filters include a selected parent and its active children, while direct story URLs remain available when a category is later deactivated.
+
+Flyway V9 creates `newspaper_editions` with `DRAFT`, `PUBLISHED`, and `UNPUBLISHED` states, a database uniqueness rule on `(edition_date, lower(edition))`, and indexes for archive queries. PDFs and optional covers are stored under `newspapers/YYYY/MM/DD/` through the local storage adapter; PostgreSQL stores only keys and metadata. The document endpoint streams the file only after JWT authentication and publication checks, so no permanent public PDF URL is exposed.
 
 Flyway creates `users` with:
 

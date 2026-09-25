@@ -36,18 +36,18 @@ export function PublicHeader() {
           {isMenuOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
         </button>
         <nav id="public-navigation" className={`${isMenuOpen ? "absolute inset-x-0 top-full border-b border-line bg-paper px-5 py-3 shadow-soft" : "hidden"} sm:static sm:block sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none`} aria-label="Primary navigation">
-          {user ? (
-            <div className="flex flex-col gap-1 text-sm font-semibold sm:flex-row sm:items-center sm:gap-2">
+          <div className="flex flex-col gap-1 text-sm font-semibold sm:flex-row sm:items-center sm:gap-2">
+            <Link href="/" className="rounded-lg px-3 py-3 text-slate transition hover:bg-mist hover:text-ink sm:py-2">Home</Link>
+            <Link href="/newspaper" className="rounded-lg px-3 py-3 text-slate transition hover:bg-mist hover:text-ink sm:py-2">Newspaper</Link>
+          {user ? (<>
               <Link href="/profile" className="rounded-lg px-3 py-3 text-slate transition hover:bg-mist hover:text-ink sm:py-2">Profile</Link>
               {user.role === "ADMIN" ? <Link href="/admin/dashboard" className="rounded-lg px-3 py-3 text-slate transition hover:bg-mist hover:text-ink sm:py-2">Admin</Link> : null}
               <button type="button" onClick={handleLogout} className="rounded-lg border border-line px-3 py-3 text-left text-ink transition hover:border-ink sm:py-2 sm:text-center">Log out</button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-1 text-sm font-semibold sm:flex-row sm:items-center sm:gap-2">
+          </>) : (<>
               <Link href="/login" className="rounded-lg px-3 py-3 text-slate transition hover:bg-mist hover:text-ink sm:py-2">Log in</Link>
               <Link href="/register" className="rounded-lg bg-ink px-3.5 py-3 text-white transition hover:bg-ink/90 sm:py-2">Join free</Link>
-            </div>
-          )}
+          </>)}
+          </div>
         </nav>
       </div>
     </header>

@@ -12,7 +12,7 @@ import { FormEvent, useState } from "react";
 
 type FormErrors = Partial<Record<"name" | "email" | "password" | "confirmPassword", string>>;
 
-export function RegisterForm() {
+export function RegisterForm({ nextPath }: { nextPath?: string }) {
   const { register } = useAuth();
   const router = useRouter();
   const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "" });
@@ -44,7 +44,7 @@ export function RegisterForm() {
     setIsSubmitting(true);
     try {
       await register({ name: form.name.trim(), email: form.email.trim(), password: form.password });
-      router.replace("/login?registered=1");
+      router.replace(`/login?registered=1${nextPath && nextPath.startsWith("/") ? `&next=${encodeURIComponent(nextPath)}` : ""}`);
     } catch (error) {
       const apiError = error instanceof ApiClientError ? error : null;
       if (apiError?.errors) {

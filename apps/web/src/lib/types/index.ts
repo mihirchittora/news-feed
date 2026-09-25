@@ -81,9 +81,31 @@ export type Category = {
   description?: string | null;
   status: "ACTIVE" | "INACTIVE";
   displayOrder: number;
+  parentId?: string | null;
+  parentName?: string | null;
 };
 
-export type PublicCategory = Pick<Category, "id" | "name" | "slug"> & { description?: string | null };
+export type PublicCategory = Pick<Category, "id" | "name" | "slug"> & { description?: string | null; children?: PublicCategory[] };
+
+export type Newspaper = {
+  id: string;
+  title: string;
+  edition: string;
+  editionDate: string;
+  coverImageUrl?: string | null;
+  publishedAt?: string | null;
+};
+
+export type AdminNewspaper = Newspaper & {
+  status: "DRAFT" | "PUBLISHED" | "UNPUBLISHED" | string;
+  hasDocument: boolean;
+  hasCover: boolean;
+  uploadedBy: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PublicNewspaperList = { items: Newspaper[] };
 
 export type Tag = { id: string; name: string; slug: string };
 
