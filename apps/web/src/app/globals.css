@@ -36,3 +36,19 @@ button,
 input {
   font: inherit;
 }
+
+.prose-news {
+  color: #25333e;
+  font-size: 1.12rem;
+  line-height: 1.9;
+}
+
+.prose-news p { margin: 0 0 1.4rem; }
+.prose-news h1, .prose-news h2, .prose-news h3 { color: #15212b; font-family: var(--font-newsreader), Georgia, serif; font-weight: 700; line-height: 1.15; margin: 2rem 0 0.85rem; }
+.prose-news h2 { font-size: 1.8rem; }
+.prose-news h3 { font-size: 1.45rem; }
+.prose-news strong, .prose-news b { color: #15212b; font-weight: 700; }
+.prose-news a { color: #be4e40; text-decoration: underline; }
+.prose-news ul, .prose-news ol { margin: 0 0 1.4rem 1.5rem; }
+.prose-news ul { list-style: disc; }
+.prose-news ol { list-style: decimal; }

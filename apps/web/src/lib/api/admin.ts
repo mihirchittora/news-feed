@@ -1,5 +1,5 @@
 import { request } from "@/lib/api/client";
-import type { AdminRole, PermissionGroup, StaffUser, User } from "@/lib/types";
+import type { AdminRole, AdminStory, Category, PermissionGroup, StaffUser, StoryMedia, Tag, User } from "@/lib/types";
 
 export const adminApi = {
   me: (token: string) => request<User>("/api/v1/admin/me", {}, token),
@@ -25,4 +25,21 @@ export const adminApi = {
   enableStaff: (token: string, id: string) => request<StaffUser>(`/api/v1/admin/staff/${id}/enable`, { method: "POST" }, token),
   completeStaffSetup: (payload: { token: string; password: string }) =>
     request<void>("/api/v1/auth/staff-setup", { method: "POST", body: JSON.stringify(payload) }),
+  categories: (token: string) => request<Category[]>("/api/v1/admin/categories", {}, token),
+  category: (token: string, id: string) => request<Category>(`/api/v1/admin/categories/${id}`, {}, token),
+  createCategory: (token: string, payload: { name: string; slug?: string; description?: string; status: string; displayOrder: number }) => request<Category>("/api/v1/admin/categories", { method: "POST", body: JSON.stringify(payload) }, token),
+  updateCategory: (token: string, id: string, payload: { name: string; slug?: string; description?: string; status: string; displayOrder: number }) => request<Category>(`/api/v1/admin/categories/${id}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  deleteCategory: (token: string, id: string) => request<void>(`/api/v1/admin/categories/${id}`, { method: "DELETE" }, token),
+  tags: (token: string, query?: string) => request<Tag[]>(`/api/v1/admin/tags${query ? `?query=${encodeURIComponent(query)}` : ""}`, {}, token),
+  createTag: (token: string, payload: { name: string; slug?: string }) => request<Tag>("/api/v1/admin/tags", { method: "POST", body: JSON.stringify(payload) }, token),
+  updateTag: (token: string, id: string, payload: { name: string; slug?: string }) => request<Tag>(`/api/v1/admin/tags/${id}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  deleteTag: (token: string, id: string) => request<void>(`/api/v1/admin/tags/${id}`, { method: "DELETE" }, token),
+  stories: (token: string, params = "") => request<AdminStory[]>(`/api/v1/admin/stories${params ? `?${params}` : ""}`, {}, token),
+  story: (token: string, id: string) => request<AdminStory>(`/api/v1/admin/stories/${id}`, {}, token),
+  createStory: (token: string, payload: { title: string; summary?: string; body: string; categoryId?: string; tagIds: string[]; mediaIds: string[] }) => request<AdminStory>("/api/v1/admin/stories", { method: "POST", body: JSON.stringify(payload) }, token),
+  updateStory: (token: string, id: string, payload: { title: string; summary?: string; body: string; categoryId?: string; tagIds: string[]; mediaIds: string[] }) => request<AdminStory>(`/api/v1/admin/stories/${id}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  publishStory: (token: string, id: string) => request<AdminStory>(`/api/v1/admin/stories/${id}/publish`, { method: "POST" }, token),
+  unpublishStory: (token: string, id: string) => request<AdminStory>(`/api/v1/admin/stories/${id}/unpublish`, { method: "POST" }, token),
+  deleteStory: (token: string, id: string) => request<void>(`/api/v1/admin/stories/${id}`, { method: "DELETE" }, token),
+  uploadMedia: (token: string, file: File, storyId?: string) => { const body = new FormData(); body.append("file", file); if (storyId) body.append("storyId", storyId); return request<StoryMedia>("/api/v1/admin/media", { method: "POST", body }, token); },
 };

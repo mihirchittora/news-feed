@@ -1,0 +1,1 @@
+ALTER TABLE story_media ALTER COLUMN duration_seconds TYPE DOUBLE PRECISION;

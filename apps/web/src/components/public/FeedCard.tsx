@@ -1,0 +1,10 @@
+import type { StorySummary } from "@/lib/types";
+import { Clock3, Play } from "lucide-react";
+import Link from "next/link";
+
+function publishedLabel(value?: string | null) { if (!value) return "Draft"; return new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)); }
+
+export function FeedCard({ story }: { story: StorySummary }) {
+  const lead = story.media[0];
+  return <article className="group overflow-hidden rounded-3xl border border-line bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft"><Link href={`/story/${story.slug}`} className="block focus:outline-none focus:ring-4 focus:ring-coral/20"><div className="grid gap-0 md:grid-cols-[minmax(0,1fr)_18rem]"><div className="p-6 sm:p-8"><div className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-coral"><span>{story.category?.name ?? "News"}</span><span className="text-line">•</span><span className="inline-flex items-center gap-1 text-slate"><Clock3 size={12} />{publishedLabel(story.publishedAt)}</span></div><h2 className="mt-4 font-display text-3xl font-bold leading-tight tracking-[-0.04em] text-ink group-hover:text-coral sm:text-4xl">{story.title}</h2>{story.summary ? <p className="mt-4 max-w-2xl text-base leading-7 text-slate">{story.summary}</p> : null}<p className="mt-6 text-xs font-semibold text-slate">By {story.authorName}</p></div><div className="relative min-h-52 overflow-hidden bg-mist md:min-h-full">{lead?.type === "IMAGE" ? <img src={lead.url} alt={story.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]" loading="lazy" /> : lead?.type === "VIDEO" ? <><video src={lead.url} poster={lead.thumbnailUrl ?? undefined} muted preload="metadata" className="h-full w-full object-cover" /><span className="absolute left-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-ink/85 text-white"><Play size={16} fill="currentColor" /></span></> : <div className="flex h-full items-center justify-center p-8 text-center font-display text-2xl font-bold text-slate/50">News Platform</div>}</div></div></Link></article>;
+}

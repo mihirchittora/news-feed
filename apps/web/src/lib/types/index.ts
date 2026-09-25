@@ -73,3 +73,63 @@ export type StaffUser = {
   roles: RoleSummary[];
   setupLink?: string | null;
 };
+
+export type Category = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  status: "ACTIVE" | "INACTIVE";
+  displayOrder: number;
+};
+
+export type PublicCategory = Pick<Category, "id" | "name" | "slug"> & { description?: string | null };
+
+export type Tag = { id: string; name: string; slug: string };
+
+export type StoryMedia = {
+  id: string;
+  type: "IMAGE" | "VIDEO";
+  url: string;
+  thumbnailUrl?: string | null;
+  mimeType: string;
+  fileSize: number;
+  width?: number | null;
+  height?: number | null;
+  durationSeconds?: number | null;
+  sortOrder: number;
+};
+
+export type StorySummary = {
+  id: string;
+  title: string;
+  slug: string;
+  summary?: string | null;
+  category?: PublicCategory | null;
+  tags: Tag[];
+  media: StoryMedia[];
+  publishedAt?: string | null;
+  authorName: string;
+};
+
+export type PublicStory = StorySummary & { body: string };
+
+export type AdminStory = {
+  id: string;
+  title: string;
+  slug: string;
+  summary?: string | null;
+  body: string;
+  status: "DRAFT" | "PUBLISHED" | "UNPUBLISHED";
+  categoryId?: string | null;
+  categoryName?: string | null;
+  tagIds: string[];
+  media: StoryMedia[];
+  authorId: string;
+  authorName: string;
+  publishedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type FeedResponse = { items: StorySummary[]; nextCursor?: string | null; hasMore: boolean };

@@ -18,6 +18,10 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  servlet:
+    multipart:
+      max-file-size: ${MAX_VIDEO_UPLOAD_SIZE:52428800}
+      max-request-size: ${MAX_VIDEO_UPLOAD_SIZE:52428800}
 
 server:
   port: ${PORT:8080}
@@ -34,8 +38,13 @@ app:
     email: ${INITIAL_ADMIN_EMAIL:}
     password: ${INITIAL_ADMIN_PASSWORD:}
     name: ${INITIAL_ADMIN_NAME:}
+  media:
+    storage-type: ${MEDIA_STORAGE_TYPE:local}
+    storage-path: ${MEDIA_STORAGE_PATH:./data/media}
+    public-url: ${MEDIA_PUBLIC_URL:http://localhost:8080}
+    max-image-upload-size: ${MAX_IMAGE_UPLOAD_SIZE:10485760}
+    max-video-upload-size: ${MAX_VIDEO_UPLOAD_SIZE:52428800}
 
 springdoc:
   swagger-ui:
     path: /swagger-ui/index.html
-

@@ -9,6 +9,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.Instant;
@@ -30,6 +31,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiError> handleMalformedRequest(HttpServletRequest request) {
         return error(HttpStatus.BAD_REQUEST, "MALFORMED_REQUEST", "Request body could not be read", Map.of(), request);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiError> handleMaxUpload(MaxUploadSizeExceededException exception, HttpServletRequest request) {
+        return error(HttpStatus.BAD_REQUEST, "MEDIA_TOO_LARGE", "The uploaded file exceeds the configured size limit", Map.of(), request);
     }
 
     @ExceptionHandler(DuplicateEmailException.class)

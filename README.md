@@ -1,8 +1,8 @@
-# News Platform — Milestone 1
+# News Platform — Milestone 2
 
 Milestone 1 is a modular-monolith foundation for a digital news platform. It includes account registration, login, stateless JWT authentication, role authorization, the current-user API, an initial admin bootstrap, and the first admin dashboard shell.
 
-Future product modules such as stories, feed items, media processing, comments, likes, newspaper editions, advertisements, categories, tags, and breaking news are intentionally not implemented yet.
+Milestone 2 adds the editorial publishing workflow: categories, normalized reusable tags, stories, media, draft/publish lifecycle, public feed, filtering, detail pages, and permission-aware admin screens. Likes, comments, breaking news, newspaper editions, advertisements, notifications, recommendations, and AI features remain out of scope.
 
 ## Architecture
 
@@ -36,7 +36,7 @@ cp .env.example .env
 
 `.env` is ignored by git. Replace `JWT_SECRET` with a random value of at least 32 bytes for any shared environment. The included values are development placeholders only.
 
-The backend imports the root `.env` when run from `apps/backend`. The frontend defaults to `http://localhost:8080`; set `NEXT_PUBLIC_API_URL` in `apps/web/.env.local` if the API runs elsewhere.
+The backend imports the root `.env` when run from `apps/backend`. The frontend defaults to `http://localhost:8080`; set `NEXT_PUBLIC_API_URL` in `apps/web/.env.local` if the API runs elsewhere. Local media defaults to `./data/media`; Docker uses the persistent `news_media_data` volume mounted at `/data/media`.
 
 ## Run the full stack with Docker Compose
 
@@ -56,6 +56,8 @@ docker-compose logs -f backend
 docker-compose down
 ```
 
+Uploaded Docker development media survives `docker-compose down` and normal restarts. To intentionally clear only the media volume, run `docker volume rm news-feed_news_media_data` after stopping the stack. `docker-compose down -v` clears the database and media volumes together.
+
 The default host ports are configurable through `.env`: `POSTGRES_PORT`, `BACKEND_PORT`, and `WEB_PORT`. This project defaults PostgreSQL to host port 5440 because 5432 is commonly occupied by an existing local PostgreSQL or Docker service.
 
 ```bash
@@ -72,7 +74,7 @@ docker-compose up -d postgres
 
 If your Docker installation uses the newer integrated command, `docker compose` is equivalent.
 
-PostgreSQL is exposed at `localhost:5440` by default with the development database `news_platform`. Set `POSTGRES_PORT=5432` if that port is free on your machine. Flyway runs `V1__create_users.sql` automatically when the backend starts.
+PostgreSQL is exposed at `localhost:5440` by default with the development database `news_platform`. Set `POSTGRES_PORT=5432` if that port is free on your machine. Flyway runs the user/RBAC migrations plus `V3__add_editorial_publishing.sql` and `V4__fix_media_duration_type.sql` automatically when the backend starts.
 
 ## Run the backend
 
@@ -125,6 +127,15 @@ If an account already exists for that email, startup does nothing. It never over
 | `GET` | `/` or `/api/v1/health` | Public | Return API service health |
 | `GET` | `/api/v1/users/me` | Authenticated | Return the current user |
 | `GET` | `/api/v1/admin/me` | `ADMIN` only | Verify admin authorization |
+| `GET` | `/api/v1/categories` | Public | List active categories |
+| `GET` | `/api/v1/feed` | Public | Chronological published feed; supports `category`, `tag`, `limit`, `cursor` |
+| `GET` | `/api/v1/feed/{slug}` | Public | Published story detail |
+| `GET/POST/PUT/DELETE` | `/api/v1/admin/categories` | `CATEGORY_MANAGE` | Manage categories |
+| `GET/POST/PUT/DELETE` | `/api/v1/admin/tags` | `TAG_MANAGE` | Manage normalized reusable tags |
+| `GET/POST/PUT/DELETE` | `/api/v1/admin/stories` | Story permissions | Manage story drafts and relations |
+| `POST` | `/api/v1/admin/stories/{id}/publish` | `STORY_PUBLISH` | Publish a complete story |
+| `POST` | `/api/v1/admin/stories/{id}/unpublish` | `STORY_PUBLISH` | Remove a story from public views |
+| `POST` | `/api/v1/admin/media` | `STORY_CREATE` or `STORY_EDIT` | Store an image/video through the media abstraction |
 
 Validation and security errors use one response shape:
 
@@ -143,16 +154,24 @@ Swagger UI is available at `http://localhost:8080/swagger-ui/index.html` when th
 
 ## Frontend routes
 
-- `/` — public platform landing page
+- `/` — public chronological home feed
+- `/category/[slug]` — category feed
+- `/tag/[slug]` — tag results feed
+- `/story/[slug]` — responsive story detail with media
 - `/login` — shared user/admin login
 - `/register` — account registration; redirects to login after success
 - `/profile` — authenticated account view
 - `/admin/dashboard` — admin-only dashboard shell
+- `/admin/stories`, `/admin/stories/new`, `/admin/stories/[id]` — story list, editor, preview, media, publish/unpublish, delete
+- `/admin/categories` — category management and ordering
+- `/admin/tags` — tag management and search
 - `/403` — signed-in users without admin access (`/forbidden` remains a compatibility alias)
 
 The non-public pages use client-side guards for responsive navigation while every API permission is enforced by Spring Security on the server.
 
-## Database schema
+## Editorial schema
+
+Flyway creates `categories`, `tags`, `stories`, `story_tags`, and `story_media` in addition to the Milestone 1 tables. Stories use `DRAFT`, `PUBLISHED`, and `UNPUBLISHED` states; public queries only select `PUBLISHED` stories ordered by `published_at DESC, id DESC`. Story bodies are stored as sanitized HTML with paragraph, heading, emphasis, links, and list elements allowed. Media binaries never enter PostgreSQL: the `MediaStorageService` interface currently uses a local file adapter, with a Docker named volume for development.
 
 Flyway creates `users` with:
 
