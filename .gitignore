@@ -22,3 +22,12 @@ apps/backend/target/
 # Logs
 *.log
 npm-debug.log*
+
+# Terraform state, plans, provider caches, and local variable files
+infra/**/.terraform/
+infra/**/*.tfstate
+infra/**/*.tfstate.*
+infra/**/*.tfplan
+infra/**/*.tfvars
+!infra/**/*.tfvars.example
+infra/**/*.tfvars.json

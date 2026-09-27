@@ -2,6 +2,8 @@ spring:
   config:
     activate:
       on-profile: prod
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
 
 app:
   environment: production

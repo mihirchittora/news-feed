@@ -1,8 +1,15 @@
 import type { ApiError } from "@/lib/types";
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080").replace(/\/$/, "");
+function configuredApiBaseUrl() {
+  if (typeof window !== "undefined") {
+    const runtimeUrl = window.__NEWS_PLATFORM_CONFIG__?.apiBaseUrl;
+    if (runtimeUrl) return runtimeUrl;
+  }
+  if (typeof window === "undefined" && process.env.INTERNAL_API_URL) return process.env.INTERNAL_API_URL;
+  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+}
 
-export function apiUrl(path: string) { return `${API_BASE_URL}${path}`; }
+export function apiUrl(path: string) { return `${configuredApiBaseUrl().replace(/\/$/, "")}${path}`; }
 
 export class ApiClientError extends Error {
   status: number;

@@ -1,6 +1,12 @@
 # Backup and recovery
 
-This document describes the responsibilities of the deployment operator. The repository does not provision a cloud backup vendor.
+This document describes the responsibilities of the deployment operator. Local Compose and OCI production use different backup mechanisms; the repository does not provision an external backup vendor or run a restore automatically.
+
+## OCI production
+
+The Terraform database module enables OCI managed PostgreSQL scheduled backups with regional durable storage. Confirm point-in-time recovery, encryption/KMS settings, actual retention, recovery-point objective, and restore permissions in the OCI console for each environment; Terraform configuration is not evidence that a restore drill has succeeded.
+
+Object Storage is private and versioned. Configure an OCI lifecycle/replication/backup policy appropriate to the required recovery point, and test restoring a representative set of story media, advertisement media, covers, and protected newspaper PDFs. Do not use a public bucket or pre-authenticated PDF URLs as a backup shortcut.
 
 ## PostgreSQL
 
@@ -33,6 +39,8 @@ Back up the configured object-storage bucket, or the local `MEDIA_STORAGE_PATH` 
 - **Media loss:** restore the matching media backup first. Run the Unix `.sh` or Windows `.ps1` consistency helper and investigate every missing storage reference before publishing content.
 - **Failed deployment:** stop the new version, restore the prior image/configuration, and roll back only migrations using an approved database procedure. Do not edit an already-applied migration.
 - **Bad migration:** stop application writes, take a fresh backup, diagnose the migration failure, and ship a new forward migration or restore the pre-migration backup. The current application does not provide automatic destructive migration rollback.
+
+For OCI, preserve the failed and previous image digests and use the [deployment runbook](deployment-runbook.md) rollback procedure. Restoring an old image is safe only when its schema remains compatible; Flyway migrations are forward-only.
 
 ## Recovery validation
 

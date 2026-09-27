@@ -11,7 +11,6 @@ import com.newsplatform.newspaper.repository.NewspaperEditionRepository;
 import com.newsplatform.rbac.service.AuditService;
 import com.newsplatform.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -145,14 +144,14 @@ public class NewspaperService {
     public Resource document(UUID id) {
         NewspaperEdition newspaper = requirePublished(id);
         if (newspaper.getPdfStorageKey() == null) throw notFound("NEWSPAPER_DOCUMENT_NOT_FOUND", "Newspaper document not found");
-        return new FileSystemResource(storage.resolve(newspaper.getPdfStorageKey()));
+        return storage.open(newspaper.getPdfStorageKey());
     }
 
     @Transactional(readOnly = true)
     public Resource cover(UUID id) {
         NewspaperEdition newspaper = requirePublished(id);
         if (newspaper.getCoverImageStorageKey() == null) throw notFound("NEWSPAPER_COVER_NOT_FOUND", "Newspaper cover not found");
-        return new FileSystemResource(storage.resolve(newspaper.getCoverImageStorageKey()));
+        return storage.open(newspaper.getCoverImageStorageKey());
     }
 
     @Transactional(readOnly = true)

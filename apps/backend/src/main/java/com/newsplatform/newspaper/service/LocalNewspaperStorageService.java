@@ -3,6 +3,9 @@ package com.newsplatform.newspaper.service;
 import com.newsplatform.common.error.RbacException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,6 +19,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 @Service
+@ConditionalOnProperty(name = "app.media.storage-type", havingValue = "local", matchIfMissing = true)
 public class LocalNewspaperStorageService implements NewspaperStorageService {
     private final Path storagePath;
     private final long maxPdfSize;
@@ -72,6 +76,9 @@ public class LocalNewspaperStorageService implements NewspaperStorageService {
         if (!path.startsWith(storagePath) || !Files.isRegularFile(path)) throw notFound();
         return path;
     }
+
+    @Override
+    public Resource open(String storageKey) { return new FileSystemResource(resolve(storageKey)); }
 
     @Override
     public void delete(String storageKey) {

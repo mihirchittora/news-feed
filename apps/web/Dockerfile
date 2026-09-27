@@ -29,9 +29,13 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
+ENV NEXT_PUBLIC_API_URL=http://localhost:8080
+ENV INTERNAL_API_URL=http://localhost:8080
+ENV SITE_URL=http://localhost:3000
 COPY --from=builder --chown=nextjs:nextjs /app/public ./public
 COPY --from=builder --chown=nextjs:nextjs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nextjs /app/.next/static ./.next/static
+COPY --chown=nextjs:nextjs docker-entrypoint.sh ./docker-entrypoint.sh
 USER nextjs
 EXPOSE 3000
-CMD ["node", "server.js"]
+CMD ["sh", "/app/docker-entrypoint.sh"]

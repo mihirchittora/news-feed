@@ -16,6 +16,9 @@ public class ProductionConfigurationValidator {
     private final boolean hstsEnabled;
     private final String databasePassword;
     private final String initialAdminPassword;
+    private final String storageType;
+    private final String objectStorageNamespace;
+    private final String objectStorageBucket;
 
     public ProductionConfigurationValidator(
             @Value("${app.environment:development}") String environment,
@@ -23,7 +26,10 @@ public class ProductionConfigurationValidator {
             @Value("${app.frontend-url:http://localhost:3000}") String frontendUrls,
             @Value("${app.security.hsts-enabled:false}") boolean hstsEnabled,
             @Value("${spring.datasource.password:}") String databasePassword,
-            @Value("${app.initial-admin.password:}") String initialAdminPassword
+            @Value("${app.initial-admin.password:}") String initialAdminPassword,
+            @Value("${app.media.storage-type:local}") String storageType,
+            @Value("${app.media.oci.namespace:}") String objectStorageNamespace,
+            @Value("${app.media.oci.bucket:}") String objectStorageBucket
     ) {
         this.environment = environment;
         this.jwtSecret = jwtSecret;
@@ -31,6 +37,9 @@ public class ProductionConfigurationValidator {
         this.hstsEnabled = hstsEnabled;
         this.databasePassword = databasePassword;
         this.initialAdminPassword = initialAdminPassword;
+        this.storageType = storageType;
+        this.objectStorageNamespace = objectStorageNamespace;
+        this.objectStorageBucket = objectStorageBucket;
     }
 
     @PostConstruct
@@ -51,6 +60,9 @@ public class ProductionConfigurationValidator {
         }
         if (initialAdminPassword != null && initialAdminPassword.equals("ChangeMe123!")) {
             throw new IllegalStateException("Production initial admin bootstrap password must be replaced or omitted");
+        }
+        if ("oci".equalsIgnoreCase(storageType) && (objectStorageNamespace.isBlank() || objectStorageBucket.isBlank())) {
+            throw new IllegalStateException("Production OCI storage requires OCI_OBJECT_STORAGE_NAMESPACE and OCI_OBJECT_STORAGE_BUCKET");
         }
     }
 }

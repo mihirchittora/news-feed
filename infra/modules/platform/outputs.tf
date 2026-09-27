@@ -1,0 +1,10 @@
+output "frontend_endpoint" { value = module.load_balancer.endpoint }
+output "load_balancer_ip" { value = module.load_balancer.public_ip }
+output "load_balancer_id" { value = module.load_balancer.load_balancer_id }
+output "backend_container_id" { value = module.containers.backend_id }
+output "web_container_id" { value = module.containers.web_id }
+output "database_id" { value = module.database.db_system_id }
+output "media_bucket" { value = module.storage.bucket_name }
+output "ocir_backend_repository" { value = module.registry.backend_repository }
+output "ocir_web_repository" { value = module.registry.web_repository }
+output "log_group_id" { value = module.observability.log_group_id }

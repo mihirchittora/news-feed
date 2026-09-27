@@ -15,6 +15,7 @@ RUN groupadd --system newsplatform && useradd --system --gid newsplatform --home
 WORKDIR /app
 ENV JAVA_OPTS=""
 COPY --from=build --chown=newsplatform:newsplatform /workspace/target/news-platform-api-*.jar /app/app.jar
-USER newsplatform
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod 755 /app/docker-entrypoint.sh
 EXPOSE 8080
-ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]
+ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]

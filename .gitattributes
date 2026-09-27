@@ -13,3 +13,6 @@
 *.yaml text eol=lf
 *.md text eol=lf
 *.xml text eol=lf
+*.tf text eol=lf
+*.tfvars.example text eol=lf
+*.properties text eol=lf

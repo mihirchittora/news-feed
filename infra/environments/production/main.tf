@@ -1,0 +1,36 @@
+module "platform" {
+  source = "../../modules/platform"
+
+  compartment_id                   = var.compartment_id
+  environment                      = var.environment
+  region                           = var.region
+  availability_domain              = var.availability_domain
+  tenancy_namespace                = var.tenancy_namespace
+  vcn_cidr                         = var.vcn_cidr
+  public_subnet_cidr               = var.public_subnet_cidr
+  app_subnet_cidr                  = var.app_subnet_cidr
+  database_subnet_cidr             = var.database_subnet_cidr
+  vcn_dns_label                    = var.vcn_dns_label
+  bucket_name                      = var.bucket_name
+  certificate_id                   = var.certificate_id
+  frontend_url                     = var.frontend_url
+  backend_url                      = var.backend_url
+  frontend_domain                  = var.frontend_domain
+  ocir_registry                    = var.ocir_registry
+  backend_image_name               = var.backend_image_name
+  web_image_name                   = var.web_image_name
+  backend_image                    = var.backend_image
+  web_image                        = var.web_image
+  artifact_tag                     = var.artifact_tag
+  ocir_pull_secret_id              = var.ocir_pull_secret_id
+  database_password_secret_id      = var.database_password_secret_id
+  database_password_secret_version = var.database_password_secret_version
+  jwt_secret_id                    = var.jwt_secret_id
+  initial_admin_password_secret_id = var.initial_admin_password_secret_id
+  database_username                = var.database_username
+  database_pool_max_size           = var.database_pool_max_size
+  database_pool_min_idle           = var.database_pool_min_idle
+  app_timezone                     = var.app_timezone
+  notification_topic_id            = var.notification_topic_id
+  monitoring_alarms                = var.monitoring_alarms
+}

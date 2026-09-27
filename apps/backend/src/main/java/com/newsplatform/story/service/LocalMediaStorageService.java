@@ -4,6 +4,8 @@ import com.newsplatform.common.error.RbacException;
 import com.newsplatform.story.entity.StoryMediaType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,6 +18,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 @Service
+@ConditionalOnProperty(name = "app.media.storage-type", havingValue = "local", matchIfMissing = true)
 public class LocalMediaStorageService implements MediaStorageService {
     private final Path storagePath; private final String publicUrl; private final long maxImageSize; private final long maxVideoSize;
     public LocalMediaStorageService(@Value("${app.media.storage-path:./data/media}") String storagePath, @Value("${app.media.public-url:http://localhost:8080}") String publicUrl,
@@ -49,6 +52,21 @@ public class LocalMediaStorageService implements MediaStorageService {
         } catch (IOException ex) { throw new RbacException(HttpStatus.INTERNAL_SERVER_ERROR, "MEDIA_STORAGE_ERROR", "The media could not be stored"); }
     }
     @Override public void delete(String storageKey) { if (storageKey == null || storageKey.contains("/") || storageKey.contains("\\")) return; try { Files.deleteIfExists(storagePath.resolve(storageKey).normalize()); } catch (IOException ignored) { } }
+    @Override public RetrievedMedia retrieve(String storageKey) {
+        if (storageKey == null || storageKey.isBlank() || storageKey.contains("/") || storageKey.contains("\\") || storageKey.contains("..")) {
+            throw new RbacException(HttpStatus.NOT_FOUND, "MEDIA_NOT_FOUND", "Media not found");
+        }
+        Path path = storagePath.resolve(storageKey).normalize();
+        if (!path.getParent().equals(storagePath) || !Files.isRegularFile(path)) {
+            throw new RbacException(HttpStatus.NOT_FOUND, "MEDIA_NOT_FOUND", "Media not found");
+        }
+        try {
+            String contentType = Files.probeContentType(path);
+            return new RetrievedMedia(new FileSystemResource(path), contentType == null ? "application/octet-stream" : contentType);
+        } catch (IOException exception) {
+            throw new RbacException(HttpStatus.NOT_FOUND, "MEDIA_NOT_FOUND", "Media not found");
+        }
+    }
     private byte[] readHeader(MultipartFile file) throws IOException { try (InputStream input = file.getInputStream()) { return input.readNBytes(16); } }
     private boolean imageType(String mime) { return mime.equals("image/jpeg") || mime.equals("image/png") || mime.equals("image/webp"); }
     private boolean videoType(String mime) { return mime.equals("video/mp4"); }

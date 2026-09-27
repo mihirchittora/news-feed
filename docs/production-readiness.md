@@ -11,6 +11,8 @@ Legend: `IMPLEMENTED` means code/configuration exists; `VERIFIED` means the comm
 - [x] `IMPLEMENTED` Rich-text allowlist and plain-text comment handling
 - [x] `IMPLEMENTED` Setup-token expiry, hashing, single-use locking, and auth endpoint rate limiting
 - [ ] `REMAINING RISK` HTTPS termination, secret rotation, WAF/proxy limits, and external security testing
+- [x] `IMPLEMENTED` OCI Vault-backed runtime secret loading and private Object Storage adapters
+- [ ] `DOCUMENTED ONLY` OCI dynamic-group policies, GitHub environment protection, and certificate/DNS configuration
 
 ## DATABASE
 
@@ -20,6 +22,8 @@ Legend: `IMPLEMENTED` means code/configuration exists; `VERIFIED` means the comm
 - [x] `IMPLEMENTED` Transactional service methods for publication, RBAC, moderation, newspaper, and advertisement changes
 - [ ] `REMAINING RISK` Upgrade migration must be exercised against the operator's real previous-milestone database
 - [ ] `DOCUMENTED ONLY` Backup/restore process in [`backup-and-recovery.md`](backup-and-recovery.md)
+- [x] `IMPLEMENTED` OCI managed PostgreSQL Terraform shape with private networking, regional durable storage, and scheduled backup settings
+- [ ] `REMAINING RISK` OCI encryption/PITR confirmation, restore drill, and actual RPO/RTO measurements
 
 ## APPLICATION / OPERATIONS
 
@@ -29,6 +33,8 @@ Legend: `IMPLEMENTED` means code/configuration exists; `VERIFIED` means the comm
 - [x] `VERIFIED` Local Compose startup reached healthy PostgreSQL/backend containers; web container served successfully
 - [x] `VERIFIED` Report-only consistency check found zero broken foreign-key references; one unattached media upload is valid draft workflow state
 - [ ] `REMAINING RISK` Alert thresholds, log shipping, dashboards, and on-call ownership are deployment-specific
+- [x] `IMPLEMENTED` Actuator commit/build metadata and readiness-based OCI Container Instance/load-balancer health checks
+- [x] `IMPLEMENTED` Terraform-managed OCI network, storage, registry, containers, load balancer, and optional alarms
 
 ## FRONTEND
 
@@ -55,7 +61,9 @@ Legend: `IMPLEMENTED` means code/configuration exists; `VERIFIED` means the comm
 - [ ] `DOCUMENTED ONLY` Real backup/restore drill against operator-managed backup media is not yet executed in this workspace
 - [ ] `REMAINING RISK` The local verification environment lacked the modern `docker compose` plugin; the repository workflow now targets the cross-platform Compose plugin required by Docker Desktop/Linux.
 - [ ] `REMAINING RISK` The web image's `npm ci` audit reports 5 transitive vulnerabilities (3 moderate, 1 high, 1 critical); dependency remediation needs ownership and review
+- [x] `IMPLEMENTED` GitHub Actions CI, immutable OCIR build, staging promotion, and manual protected production workflow definitions
+- [ ] `REMAINING RISK` OCI provider validation, plan/apply, image push, staging smoke, production smoke, and rollback are unavailable until OCI/GitHub configuration is supplied
 
 ## RELEASE GATE
 
-Do not declare production-ready until the remaining deployment-specific checks above are completed, a real backup restore is recorded, dependency audit findings are resolved or accepted, and the Docker clean/E2E tests pass.
+Do not declare production-ready until the remaining deployment-specific checks above are completed, a real backup restore is recorded, dependency audit findings are resolved or accepted, the Terraform plan is reviewed, and the staging/production smoke and rollback tests pass.

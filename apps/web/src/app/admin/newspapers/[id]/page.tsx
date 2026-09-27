@@ -1,6 +1,7 @@
 "use client";
 
 import { NewspaperForm } from "@/components/admin/NewspaperForm";
+import { AdminShell } from "@/components/layout/AdminShell";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { adminApi } from "@/lib/api/admin";
 import { ApiClientError } from "@/lib/api/client";
@@ -15,7 +16,23 @@ export default function EditNewspaperPage() {
   const [item, setItem] = useState<AdminNewspaper | null>(null);
   const [error, setError] = useState("");
   useEffect(() => { if (!token || !params.id) return; adminApi.newspaper(token, params.id).then(setItem).catch((reason) => setError(reason instanceof ApiClientError ? reason.message : "Could not load the newspaper.")); }, [token, params.id]);
-  if (error) return <div className="p-8 text-sm text-red-700">{error}</div>;
-  if (!item) return <LoadingState label="Loading newspaper" />;
-  return <NewspaperForm initialNewspaper={item} />;
+  if (error) {
+    return (
+      <AdminShell>
+        <div className="p-8 text-sm text-red-700">{error}</div>
+      </AdminShell>
+    );
+  }
+  if (!item) {
+    return (
+      <AdminShell>
+        <LoadingState label="Loading newspaper" />
+      </AdminShell>
+    );
+  }
+  return (
+    <AdminShell>
+      <NewspaperForm initialNewspaper={item} />
+    </AdminShell>
+  );
 }

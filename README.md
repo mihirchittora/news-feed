@@ -1,8 +1,8 @@
-# News Platform — Milestone 8
+# News Platform — Milestone 9
 
 Milestones 1–3 provide the modular-monolith foundation for a digital news platform: authentication, configurable RBAC, editorial publishing, media, chronological feeds, likes, comments, replies, and moderation.
 
-Milestone 4 adds a simple editorial Breaking News flag to published stories. Milestone 5 adds a two-level category hierarchy and a protected Daily Newspaper archive. Milestone 6 adds operational advertisements. Milestone 7 adds a real-data, permission-filtered admin dashboard and reporting view. Milestone 8 hardens the launch path with append-only integrity constraints, upload/content validation, request correlation, abuse throttling, security headers, Actuator probes/metrics, production configuration, Docker health ordering, sitemap/robots, and operational documentation. Newspaper metadata and covers are public; PDF documents require an authenticated account and a published edition. Push notifications, recommendations, WebSockets, subscriptions, payments, public analytics, user tracking, and ad analytics remain out of scope.
+Milestone 4 adds a simple editorial Breaking News flag to published stories. Milestone 5 adds a two-level category hierarchy and a protected Daily Newspaper archive. Milestone 6 adds operational advertisements. Milestone 7 adds a real-data, permission-filtered admin dashboard and reporting view. Milestone 8 hardens the launch path with append-only integrity constraints, upload/content validation, request correlation, abuse throttling, security headers, Actuator probes/metrics, production configuration, Docker health ordering, sitemap/robots, and operational documentation. Milestone 9 adds OCI-ready storage adapters, private OCI networking, Terraform environments, immutable OCIR image promotion, GitHub CI/CD, and deployment runbooks. Newspaper metadata and covers are public; PDF documents require an authenticated account and a published edition. Push notifications, recommendations, WebSockets, subscriptions, payments, public analytics, user tracking, and ad analytics remain out of scope.
 
 ## Architecture
 
@@ -40,6 +40,8 @@ To customize the defaults, copy `.env.example` to `.env` using the file manager,
 `APP_ENVIRONMENT=production` activates fail-fast checks for non-development JWT/database settings, explicit HTTPS CORS origins, and HSTS. Production configuration must supply secrets through the environment or secret manager; do not bake them into images.
 
 The frontend defaults to `http://localhost:8080`; Docker uses the persistent `news_media_data` named volume mounted at `/data/media`. No host path is mounted into the application containers.
+
+OCI deployment is documented separately from local Compose: [`docs/oci-architecture.md`](docs/oci-architecture.md), [`docs/ci-cd.md`](docs/ci-cd.md), and [`docs/deployment-runbook.md`](docs/deployment-runbook.md). Terraform examples contain placeholders only; production deployment requires explicit OCI/GitHub configuration and approval.
 
 ## Run the full stack with Docker Compose
 
@@ -216,7 +218,7 @@ Flyway creates `categories`, `tags`, `stories`, `story_tags`, and `story_media` 
 
 Flyway V8 adds `categories.parent_id`, a self foreign key with `RESTRICT` deletion, sibling-name uniqueness, and hierarchy indexes. The application only permits top-level parents and rejects third-level categories; story assignment rejects non-leaf categories when children exist. Public category filters include a selected parent and its active children, while direct story URLs remain available when a category is later deactivated.
 
-Flyway V9 creates `newspaper_editions` with `DRAFT`, `PUBLISHED`, and `UNPUBLISHED` states, a database uniqueness rule on `(edition_date, lower(edition))`, and indexes for archive queries. PDFs and optional covers are stored under `newspapers/YYYY/MM/DD/` through the local storage adapter; PostgreSQL stores only keys and metadata. The document endpoint streams the file only after JWT authentication and publication checks, so no permanent public PDF URL is exposed.
+Flyway V9 creates `newspaper_editions` with `DRAFT`, `PUBLISHED`, and `UNPUBLISHED` states, a database uniqueness rule on `(edition_date, lower(edition))`, and indexes for archive queries. PDFs and optional covers are stored under `newspapers/YYYY/MM/DD/` through the local or OCI Object Storage adapter; PostgreSQL stores only keys and metadata. The document endpoint streams the file only after JWT authentication and publication checks, so no permanent public PDF URL is exposed.
 
 Flyway creates `users` with:
 

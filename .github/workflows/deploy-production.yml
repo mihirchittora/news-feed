@@ -1,0 +1,127 @@
+name: Deploy production
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: Full commit SHA already validated in staging
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Apply production and smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    env:
+      OCIR_REGISTRY: ${{ vars.OCIR_REGISTRY }}
+      OCIR_NAMESPACE: ${{ vars.OCIR_NAMESPACE }}
+      BACKEND_IMAGE_NAME: ${{ vars.BACKEND_IMAGE_NAME || 'news-platform-backend' }}
+      WEB_IMAGE_NAME: ${{ vars.WEB_IMAGE_NAME || 'news-platform-web' }}
+      TF_HTTP_ADDRESS: ${{ secrets.PRODUCTION_TF_HTTP_ADDRESS }}
+      TF_HTTP_USERNAME: ${{ secrets.PRODUCTION_TF_HTTP_USERNAME }}
+      TF_HTTP_PASSWORD: ${{ secrets.PRODUCTION_TF_HTTP_PASSWORD }}
+      TF_HTTP_LOCK_ADDRESS: ${{ secrets.PRODUCTION_TF_HTTP_LOCK_ADDRESS }}
+      TF_HTTP_UNLOCK_ADDRESS: ${{ secrets.PRODUCTION_TF_HTTP_UNLOCK_ADDRESS }}
+      TF_HTTP_LOCK_METHOD: POST
+      TF_HTTP_UNLOCK_METHOD: DELETE
+      TF_HTTP_RETRY_WAIT_MIN: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha }}
+
+      - name: Validate commit SHA
+        id: release
+        run: |
+          if [[ ! "${{ inputs.commit_sha }}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "commit_sha must be a full 40-character commit SHA" >&2
+            exit 1
+          fi
+          echo "image_tag=${{ inputs.commit_sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Check staging promotion evidence
+        env:
+          STAGING_FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL }}
+          STAGING_COMMIT_SHA: ${{ vars.STAGING_COMMIT_SHA }}
+        run: |
+          if [[ -n "$STAGING_FRONTEND_URL" && -n "$STAGING_COMMIT_SHA" && "$STAGING_COMMIT_SHA" != "${{ inputs.commit_sha }}" ]]; then
+            echo "The selected commit does not match the configured staging promotion evidence." >&2
+            exit 1
+          fi
+          if [[ -n "$STAGING_FRONTEND_URL" ]]; then
+            curl --fail --silent --show-error --retry 6 --retry-delay 5 "$STAGING_FRONTEND_URL/actuator/health/readiness" >/dev/null
+          fi
+
+      - name: Log in to OCIR
+        env:
+          OCIR_AUTH_TOKEN: ${{ secrets.OCIR_AUTH_TOKEN }}
+          OCIR_USERNAME: ${{ secrets.OCIR_USERNAME }}
+        run: echo "$OCIR_AUTH_TOKEN" | docker login "$OCIR_REGISTRY" --username "$OCIR_USERNAME" --password-stdin
+
+      - name: Resolve exact image digests
+        id: images
+        env:
+          IMAGE_TAG: ${{ steps.release.outputs.image_tag }}
+        run: |
+          backend_ref="$OCIR_REGISTRY/$OCIR_NAMESPACE/$BACKEND_IMAGE_NAME:$IMAGE_TAG"
+          web_ref="$OCIR_REGISTRY/$OCIR_NAMESPACE/$WEB_IMAGE_NAME:$IMAGE_TAG"
+          backend_digest="$(docker buildx imagetools inspect "$backend_ref" --format '{{.Manifest.Digest}}')"
+          web_digest="$(docker buildx imagetools inspect "$web_ref" --format '{{.Manifest.Digest}}')"
+          test -n "$backend_digest"
+          test -n "$web_digest"
+          echo "backend_image=$OCIR_REGISTRY/$OCIR_NAMESPACE/$BACKEND_IMAGE_NAME@$backend_digest" >> "$GITHUB_OUTPUT"
+          echo "web_image=$OCIR_REGISTRY/$OCIR_NAMESPACE/$WEB_IMAGE_NAME@$web_digest" >> "$GITHUB_OUTPUT"
+
+      - name: Write production Terraform variables
+        env:
+          PRODUCTION_TFVARS: ${{ secrets.PRODUCTION_TFVARS }}
+        run: |
+          test -n "$PRODUCTION_TFVARS"
+          printf '%s\n' "$PRODUCTION_TFVARS" > infra/environments/production/production.tfvars
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.9.8'
+
+      - name: Initialize Terraform remote state
+        working-directory: infra/environments/production
+        run: terraform init -input=false
+
+      - name: Plan production deployment
+        working-directory: infra/environments/production
+        env:
+          BACKEND_IMAGE: ${{ steps.images.outputs.backend_image }}
+          WEB_IMAGE: ${{ steps.images.outputs.web_image }}
+          IMAGE_TAG: ${{ steps.release.outputs.image_tag }}
+        run: >-
+          terraform plan -input=false -out=production.tfplan
+          -var-file=production.tfvars
+          -var "backend_image=$BACKEND_IMAGE"
+          -var "web_image=$WEB_IMAGE"
+          -var "artifact_tag=$IMAGE_TAG"
+
+      - name: Apply production deployment
+        working-directory: infra/environments/production
+        run: terraform apply -input=false -auto-approve production.tfplan
+
+      - name: Smoke test production through the load balancer
+        working-directory: infra/environments/production
+        run: |
+          base_url="$(terraform output -raw frontend_endpoint)"
+          test -n "$base_url"
+          for path in /actuator/health/readiness /api/v1/feed /api/v1/categories /api/v1/breaking-news /api/v1/newspapers '/api/v1/ads?placement=HOME_BANNER'; do
+            curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-connrefused "$base_url$path" >/dev/null
+          done
+          echo "production_url=$base_url" >> "$GITHUB_STEP_SUMMARY"
+          echo "promoted_commit=${{ steps.release.outputs.image_tag }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "backend_image=${{ steps.images.outputs.backend_image }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "web_image=${{ steps.images.outputs.web_image }}" >> "$GITHUB_STEP_SUMMARY"

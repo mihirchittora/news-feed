@@ -36,6 +36,7 @@ services:
       MEDIA_STORAGE_TYPE: ${MEDIA_STORAGE_TYPE:-local}
       MEDIA_STORAGE_PATH: /data/media
       MEDIA_PUBLIC_URL: ${MEDIA_PUBLIC_URL:-http://localhost:8080}
+      INTERNAL_API_URL: ${INTERNAL_API_URL:-http://backend:8080}
       MAX_IMAGE_UPLOAD_SIZE: ${MAX_IMAGE_UPLOAD_SIZE:-10485760}
       MAX_VIDEO_UPLOAD_SIZE: ${MAX_VIDEO_UPLOAD_SIZE:-52428800}
       MAX_UPLOAD_REQUEST_SIZE: ${MAX_UPLOAD_REQUEST_SIZE:-115343360}
@@ -73,6 +74,9 @@ services:
       NODE_ENV: production
       PORT: 3000
       HOSTNAME: 0.0.0.0
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+      INTERNAL_API_URL: ${INTERNAL_API_URL:-http://backend:8080}
+      SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
     ports:
       - "${WEB_PORT:-3000}:3000"
