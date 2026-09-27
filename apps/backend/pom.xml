@@ -23,7 +23,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <nimbus.version>10.8</nimbus.version>
         <springdoc.version>2.9.1</springdoc.version>
-        <mockito.version>5.17.0</mockito.version>
+        <mockito.version>5.24.0</mockito.version>
         <oci.sdk.version>3.68.0</oci.sdk.version>
     </properties>
 
