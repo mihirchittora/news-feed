@@ -65,7 +65,7 @@ jobs:
             apps/web
 
       - name: Scan backend image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.OCIR_REGISTRY }}/${{ env.OCIR_NAMESPACE }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}
           format: table
@@ -75,7 +75,7 @@ jobs:
           exit-code: '1'
 
       - name: Scan web image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.OCIR_REGISTRY }}/${{ env.OCIR_NAMESPACE }}/${{ env.WEB_IMAGE_NAME }}:${{ github.sha }}
           format: table
