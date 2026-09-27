@@ -4,11 +4,14 @@ updates:
     directory: /apps/backend
     schedule:
       interval: weekly
+    open-pull-requests-limit: 0
   - package-ecosystem: npm
     directory: /apps/web
     schedule:
       interval: weekly
+    open-pull-requests-limit: 0
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 0
