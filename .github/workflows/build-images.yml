@@ -1,4 +1,4 @@
-name: Build immutable images
+name: Build and scan images
 
 on:
   push:
@@ -13,34 +13,16 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  OCIR_REGISTRY: ${{ vars.OCIR_REGISTRY }}
-  OCIR_NAMESPACE: ${{ vars.OCIR_NAMESPACE }}
-  BACKEND_IMAGE_NAME: ${{ vars.BACKEND_IMAGE_NAME || 'news-platform-backend' }}
-  WEB_IMAGE_NAME: ${{ vars.WEB_IMAGE_NAME || 'news-platform-web' }}
+  BACKEND_IMAGE_NAME: news-platform-backend
+  WEB_IMAGE_NAME: news-platform-web
 
 jobs:
   build:
-    name: Build, scan, and publish ${{ github.sha }}
+    name: Build and scan ${{ github.sha }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-
-      - name: Check required OCIR configuration
-        env:
-          OCIR_AUTH_TOKEN: ${{ secrets.OCIR_AUTH_TOKEN }}
-          OCIR_USERNAME: ${{ secrets.OCIR_USERNAME }}
-        run: |
-          test -n "$OCIR_REGISTRY"
-          test -n "$OCIR_NAMESPACE"
-          test -n "$OCIR_AUTH_TOKEN"
-          test -n "$OCIR_USERNAME"
-
-      - name: Log in to OCIR
-        env:
-          OCIR_AUTH_TOKEN: ${{ secrets.OCIR_AUTH_TOKEN }}
-          OCIR_USERNAME: ${{ secrets.OCIR_USERNAME }}
-        run: echo "$OCIR_AUTH_TOKEN" | docker login "$OCIR_REGISTRY" --username "$OCIR_USERNAME" --password-stdin
 
       - name: Build backend image
         env:
@@ -49,7 +31,7 @@ jobs:
           docker build \
             --label org.opencontainers.image.source="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
             --label org.opencontainers.image.revision="$IMAGE_TAG" \
-            --tag "$OCIR_REGISTRY/$OCIR_NAMESPACE/$BACKEND_IMAGE_NAME:$IMAGE_TAG" \
+            --tag "$BACKEND_IMAGE_NAME:$IMAGE_TAG" \
             apps/backend
 
       - name: Build web image
@@ -61,13 +43,13 @@ jobs:
             --build-arg NEXT_PUBLIC_SITE_URL=https://www.invalid \
             --label org.opencontainers.image.source="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
             --label org.opencontainers.image.revision="$IMAGE_TAG" \
-            --tag "$OCIR_REGISTRY/$OCIR_NAMESPACE/$WEB_IMAGE_NAME:$IMAGE_TAG" \
+            --tag "$WEB_IMAGE_NAME:$IMAGE_TAG" \
             apps/web
 
       - name: Scan backend image
         uses: aquasecurity/trivy-action@v0.35.0
         with:
-          image-ref: ${{ env.OCIR_REGISTRY }}/${{ env.OCIR_NAMESPACE }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}
+          image-ref: ${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}
           format: table
           vuln-type: os,library
           severity: CRITICAL,HIGH
@@ -77,40 +59,9 @@ jobs:
       - name: Scan web image
         uses: aquasecurity/trivy-action@v0.35.0
         with:
-          image-ref: ${{ env.OCIR_REGISTRY }}/${{ env.OCIR_NAMESPACE }}/${{ env.WEB_IMAGE_NAME }}:${{ github.sha }}
+          image-ref: ${{ env.WEB_IMAGE_NAME }}:${{ github.sha }}
           format: table
           vuln-type: os,library
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: '1'
-
-      - name: Push immutable image tags
-        env:
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker push "$OCIR_REGISTRY/$OCIR_NAMESPACE/$BACKEND_IMAGE_NAME:$IMAGE_TAG"
-          docker push "$OCIR_REGISTRY/$OCIR_NAMESPACE/$WEB_IMAGE_NAME:$IMAGE_TAG"
-
-      - name: Record image digests
-        env:
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          backend_ref="$OCIR_REGISTRY/$OCIR_NAMESPACE/$BACKEND_IMAGE_NAME:$IMAGE_TAG"
-          web_ref="$OCIR_REGISTRY/$OCIR_NAMESPACE/$WEB_IMAGE_NAME:$IMAGE_TAG"
-          backend_digest="$(docker buildx imagetools inspect "$backend_ref" --format '{{.Manifest.Digest}}')"
-          web_digest="$(docker buildx imagetools inspect "$web_ref" --format '{{.Manifest.Digest}}')"
-          test -n "$backend_digest"
-          test -n "$web_digest"
-          {
-            echo "commit_sha=$IMAGE_TAG"
-            echo "backend_image=$OCIR_REGISTRY/$OCIR_NAMESPACE/$BACKEND_IMAGE_NAME@$backend_digest"
-            echo "web_image=$OCIR_REGISTRY/$OCIR_NAMESPACE/$WEB_IMAGE_NAME@$web_digest"
-          } | tee release-metadata.txt
-          cat release-metadata.txt >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload release metadata
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-${{ github.sha }}
-          path: release-metadata.txt
-          if-no-files-found: error
