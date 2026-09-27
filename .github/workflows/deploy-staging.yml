@@ -41,7 +41,7 @@ jobs:
       TF_HTTP_UNLOCK_METHOD: DELETE
       TF_HTTP_RETRY_WAIT_MIN: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.event.inputs.commit_sha }}
 
